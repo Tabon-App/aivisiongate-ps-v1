@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>AI Vision Gate — Admin Dashboard</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo-mark"></span>
+      <span class="wordmark">AI VISION GATE</span>
+    </div>
+    <div class="village-name" id="sidebar-village"><!-- rendered by app.js --></div>
+
+    <nav class="nav-list" id="nav-list">
+      <button class="nav-item active" data-page="overview">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        ภาพรวม
+      </button>
+      <button class="nav-item" data-page="residents">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>
+        ลูกบ้าน
+      </button>
+      <button class="nav-item" data-page="vehicles">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 16l1.5-5h13L20 16"/><path d="M4 16h16v3H4z"/><circle cx="7.5" cy="19" r="1.5"/><circle cx="16.5" cy="19" r="1.5"/></svg>
+        ทะเบียนรถ
+      </button>
+      <button class="nav-item" data-page="reports">
+        <svg viewBox="0 0 24 24" fill="none"><line x1="4" y1="21" x2="4" y2="10"/><line x1="10" y1="21" x2="10" y2="3"/><line x1="16" y1="21" x2="16" y2="13"/><line x1="21" y1="21" x2="3" y2="21"/></svg>
+        รายงาน
+      </button>
+      <button class="nav-item" data-page="settings">
+        <svg viewBox="0 0 24 24" fill="none"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="2"/></svg>
+        ตั้งค่า
+      </button>
+    </nav>
+
+    <div class="clock" id="clock">--:--:--</div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main">
+
+    <!-- Overview -->
+    <section class="page active" id="page-overview">
+      <div class="page-header">
+        <div class="page-title">ภาพรวมระบบ</div>
+        <div class="page-sub">สรุปสถานะการเข้า-ออกของหมู่บ้านวันนี้</div>
+      </div>
+      <div class="stat-grid" id="stat-grid"><!-- rendered by app.js --></div>
+      <div class="panel">
+        <div class="label-row"><span class="label">เข้า-ออกรายชั่วโมง (วันนี้)</span></div>
+        <div class="bar-chart" id="hourly-chart"><!-- rendered by app.js --></div>
+      </div>
+      <div class="panel">
+        <div class="label-row"><span class="label">Recent Activity</span></div>
+        <div id="overview-activity"><!-- rendered by app.js --></div>
+      </div>
+    </section>
+
+    <!-- Residents -->
+    <section class="page" id="page-residents">
+      <div class="page-header">
+        <div class="page-title">จัดการลูกบ้าน</div>
+        <div class="page-sub">ข้อมูลบ้านเลขที่ เจ้าของบ้าน และ PIN สำหรับเข้า-ออก</div>
+      </div>
+      <div class="label-row">
+        <span class="label">รายชื่อลูกบ้าน (11 บ้าน)</span>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <input type="text" class="table-search" id="residents-search" placeholder="ค้นหาบ้านเลขที่ / ชื่อ...">
+          <button class="btn-sm" id="toggle-pin">แสดง PIN</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="residents-table">
+          <thead>
+            <tr>
+              <th>บ้านเลขที่</th>
+              <th>เจ้าของบ้าน</th>
+              <th>PIN</th>
+              <th>เบอร์โทร</th>
+              <th>Username</th>
+              <th>จำนวนรถ</th>
+            </tr>
+          </thead>
+          <tbody id="residents-tbody"><!-- rendered by app.js --></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Vehicles -->
+    <section class="page" id="page-vehicles">
+      <div class="page-header">
+        <div class="page-title">จัดการทะเบียนรถ</div>
+        <div class="page-sub">ฐานข้อมูลรถที่ลงทะเบียนทั้งหมดในระบบ</div>
+      </div>
+      <div class="label-row">
+        <span class="label">รถที่ลงทะเบียน (16 คัน)</span>
+        <input type="text" class="table-search" id="vehicles-search" placeholder="ค้นหาทะเบียน / บ้านเลขที่ / เจ้าของ...">
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="vehicles-table">
+          <thead>
+            <tr>
+              <th>ทะเบียนรถ</th>
+              <th>เจ้าของ</th>
+              <th>บ้านเลขที่</th>
+              <th>โทรศัพท์</th>
+              <th>รายละเอียดรถ</th>
+            </tr>
+          </thead>
+          <tbody id="vehicles-tbody"><!-- rendered by app.js --></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Reports -->
+    <section class="page" id="page-reports">
+      <div class="page-header">
+        <div class="page-title">รายงานการเข้า-ออก</div>
+        <div class="page-sub">สรุปสถิติย้อนหลัง 7 วัน แยกตามวันและจุดเข้า-ออก</div>
+      </div>
+      <div class="panel">
+        <div class="label-row"><span class="label">เข้า-ออกรายสัปดาห์</span></div>
+        <div class="bar-chart" id="weekly-chart"><!-- rendered by app.js --></div>
+        <div class="chart-legend">
+          <div class="legend-item"><span class="swatch entries"></span>เข้า (Entries)</div>
+          <div class="legend-item"><span class="swatch exits"></span>ออก (Exits)</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="label-row"><span class="label">สรุปตามจุดเข้า-ออก (7 วันล่าสุด)</span></div>
+        <div class="table-wrap">
+          <table class="data-table" id="gate-summary-table">
+            <thead>
+              <tr>
+                <th>จุดเข้า-ออก</th>
+                <th>เข้า (Entries)</th>
+                <th>ออก (Exits)</th>
+                <th>รวม</th>
+              </tr>
+            </thead>
+            <tbody id="gate-summary-tbody"><!-- rendered by app.js --></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section class="page" id="page-settings">
+      <div class="page-header">
+        <div class="page-title">ตั้งค่าระบบ</div>
+        <div class="page-sub">ข้อมูลหมู่บ้าน จุดเข้า-ออก และนโยบายการทำงานของระบบ</div>
+      </div>
+      <div class="panel">
+        <div class="label-row"><span class="label">ข้อมูลหมู่บ้าน</span></div>
+        <div class="settings-row">
+          <span class="s-label">ชื่อหมู่บ้าน</span>
+          <span class="s-value" id="settings-village-name"></span>
+        </div>
+        <div class="settings-row">
+          <span class="s-label">จำนวนบ้านทั้งหมด</span>
+          <span class="s-value" id="settings-total-houses"></span>
+        </div>
+        <div class="settings-row">
+          <span class="s-label">จำนวนรถที่ลงทะเบียน</span>
+          <span class="s-value" id="settings-total-vehicles"></span>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="label-row"><span class="label">จุดเข้า-ออก (Gates)</span></div>
+        <div class="gate-list" id="settings-gates"><!-- rendered by app.js --></div>
+      </div>
+      <div class="panel">
+        <div class="label-row"><span class="label">นโยบายการทำงานของระบบ</span></div>
+        <div id="settings-toggles"><!-- rendered by app.js --></div>
+      </div>
+    </section>
+
+  </main>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

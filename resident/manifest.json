@@ -1,0 +1,12 @@
+{
+  "name": "AI Vision Gate — Resident App",
+  "short_name": "AI Vision Gate",
+  "description": "Smart village access control — Resident App by InnoHome",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "icons": []
+}

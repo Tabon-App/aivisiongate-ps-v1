@@ -1,0 +1,165 @@
+/* =========================================================
+   AI VISION GATE — Gate Station
+   Design system: Tesla / SpaceX — black, minimal, sharp
+   ========================================================= */
+
+:root{
+  --bg:#000000;
+  --surface:#0B0B0D;
+  --surface-2:#171719;
+  --border:rgba(255,255,255,0.10);
+  --border-strong:rgba(255,255,255,0.22);
+  --text:#FFFFFF;
+  --dim:#9A9AA3;
+  --faint:#54545B;
+  --accent:#2E9BFF;
+  --success:#34D399;
+  --warning:#FFD60A;
+  --danger:#FF453A;
+  --radius:8px;
+  --radius-sm:4px;
+}
+
+/* ---------- Reset ---------- */
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  font-family:'Inter','Noto Sans Thai',sans-serif;
+  background-color:var(--bg);
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size:40px 40px;
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior:none;
+}
+button{font-family:inherit; cursor:pointer; border:none; background:none; color:inherit;}
+svg{display:block;}
+
+/* ---------- Labels ---------- */
+.label{font-size:10px; font-weight:600; letter-spacing:.22em; color:var(--faint); text-transform:uppercase;}
+.label-row{margin:0 0 10px;}
+
+/* ---------- Status dot ---------- */
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0; display:inline-block;}
+.dot.ok{background:var(--success); box-shadow:0 0 6px var(--success);}
+.dot.live{background:var(--accent); box-shadow:0 0 6px var(--accent);}
+.dot.warn{background:var(--warning); box-shadow:0 0 6px var(--warning);}
+.dot.danger{background:var(--danger); box-shadow:0 0 6px var(--danger);}
+.dot.faint{background:var(--faint);}
+.dot.pulse{animation:pulse 1.4s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;} 50%{opacity:.25;}}
+
+/* ---------- Buttons ---------- */
+.btn{display:flex; align-items:center; justify-content:center; gap:8px; border-radius:var(--radius-sm); padding:12px 16px; font-size:13px; font-weight:700; letter-spacing:.04em; border:1px solid transparent; width:100%;}
+.btn-primary{background:#fff; color:#000;}
+.btn-ghost{background:transparent; color:var(--text); border-color:var(--border-strong);}
+.btn-danger{background:var(--danger); color:#fff;}
+.btn-row{display:flex; gap:8px; width:100%;}
+.btn-row .btn{flex:1;}
+.btn-sm{border:1px solid var(--border-strong); border-radius:var(--radius-sm); padding:8px 12px; font-size:10px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--text); display:inline-flex; align-items:center; gap:6px; width:auto;}
+.btn-sm svg{width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round;}
+.btn-sm.is-active{background:#fff; color:#000; border-color:#fff;}
+
+/* ---------- Demo switcher ---------- */
+.demo-switcher{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; padding:16px 0 4px;}
+
+/* ---------- Kiosk shell ---------- */
+.kiosk{max-width:1140px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; padding:20px 24px 28px; gap:20px;}
+
+.topbar{display:flex; align-items:center; justify-content:space-between; padding-bottom:16px; border-bottom:1px solid var(--border);}
+.brand{display:flex; align-items:center; gap:9px;}
+.logo-mark{width:14px; height:14px; border:1.5px solid var(--text); flex-shrink:0;}
+.wordmark{font-weight:700; font-size:13px; letter-spacing:.16em;}
+.gate-info{font-size:11px; font-weight:600; letter-spacing:.14em; color:var(--dim); text-transform:uppercase; text-align:center;}
+.gate-info .village{display:block; font-size:9px; letter-spacing:.1em; color:var(--faint); margin-top:3px; text-transform:none;}
+.clock{font-size:20px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:.04em;}
+
+/* ---------- Body layout ---------- */
+.kiosk-body{display:flex; gap:24px; flex:1; align-items:flex-start;}
+.camera-panel{flex:1.25; display:flex; flex-direction:column; align-items:center; gap:16px;}
+.info-panel{flex:1; display:flex; flex-direction:column; gap:16px; min-width:0;}
+
+/* ---------- Reticle (large, with scan line) ---------- */
+.reticle{position:relative; flex-shrink:0;}
+.reticle .corner{position:absolute; border:1.5px solid var(--text); z-index:2;}
+.reticle .corner.tl{top:-1px;left:-1px;border-right:none;border-bottom:none;}
+.reticle .corner.tr{top:-1px;right:-1px;border-left:none;border-bottom:none;}
+.reticle .corner.bl{bottom:-1px;left:-1px;border-right:none;border-top:none;}
+.reticle .corner.br{bottom:-1px;right:-1px;border-left:none;border-top:none;}
+
+.reticle.large{width:100%; max-width:480px; aspect-ratio:1/1; background:var(--surface); border:1px solid var(--border); overflow:hidden;}
+.reticle.large .corner{width:22px; height:22px;}
+.reticle.large .feed{width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center;}
+.reticle.large .feed svg{width:64px; height:64px; stroke:var(--faint); fill:none; stroke-width:1.2; stroke-linecap:round; stroke-linejoin:round;}
+.reticle.large .feed .feed-label{font-size:11px; letter-spacing:.2em; color:var(--faint); text-transform:uppercase;}
+
+.scan-line{position:absolute; left:5%; right:5%; height:2px; top:6%; background:linear-gradient(90deg, transparent, var(--accent), transparent); box-shadow:0 0 14px var(--accent); opacity:0; z-index:3;}
+.reticle.large.scanning .scan-line{opacity:1; animation:scan 2.1s ease-in-out infinite;}
+@keyframes scan{0%{top:6%;} 50%{top:92%;} 100%{top:6%;}}
+
+.plate-readout{margin-top:-4px; display:flex; flex-direction:column; align-items:center; gap:4px;}
+.plate-readout .value{font-size:26px; font-weight:800; letter-spacing:.06em; font-variant-numeric:tabular-nums;}
+
+/* Capture strip (secondary captures, e.g. ID card) */
+.capture-strip{display:flex; gap:10px; align-items:center; min-height:50px;}
+.reticle.mini{width:50px; height:50px;}
+.reticle.mini .corner{width:12px; height:12px;}
+.reticle.mini .feed{width:100%; height:100%; background:var(--surface-2); display:flex; align-items:center; justify-content:center;}
+.reticle.mini .feed svg{width:46%; height:46%; stroke:var(--faint); fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round;}
+.capture-strip .cap-label{font-size:10px; color:var(--dim); letter-spacing:.1em; text-transform:uppercase;}
+
+/* ---------- Status block ---------- */
+.status-block{border:1px solid var(--border); border-radius:var(--radius); padding:20px; display:flex; flex-direction:column; gap:8px;}
+.status-block .status-label{display:inline-flex; align-items:center; gap:8px; font-size:11px; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:var(--dim);}
+.status-block .status-title{font-size:22px; font-weight:800; letter-spacing:-0.01em;}
+.status-block .status-sub{font-size:12px; color:var(--dim); line-height:1.6;}
+.status-block.success{border-color:rgba(52,211,153,.35);}
+.status-block.danger{border-color:rgba(255,69,58,.35);}
+.status-block.warn{border-color:rgba(255,214,10,.35);}
+
+/* ---------- Detail card ---------- */
+.detail-card{border:1px solid var(--border); border-radius:var(--radius); padding:16px 18px; display:flex; flex-direction:column; gap:10px;}
+.detail-row{display:flex; justify-content:space-between; align-items:baseline; gap:12px; font-size:13px;}
+.detail-row .k{font-size:10px; font-weight:600; letter-spacing:.18em; text-transform:uppercase; color:var(--faint); white-space:nowrap;}
+.detail-row .v{font-weight:700; text-align:right; font-variant-numeric:tabular-nums;}
+
+/* ---------- Countdown block ---------- */
+.countdown-block{border:1px solid var(--border); border-radius:var(--radius); padding:18px; display:flex; flex-direction:column; align-items:center; gap:6px;}
+.countdown-block .countdown-num{font-size:36px; font-weight:800; letter-spacing:.04em; font-variant-numeric:tabular-nums;}
+.countdown-block .btn-row{margin-top:6px;}
+
+/* ---------- Recent log ---------- */
+.log-panel{border:1px solid var(--border); border-radius:var(--radius); padding:14px 18px; flex:1; display:flex; flex-direction:column; gap:6px; overflow:hidden;}
+.log-row{display:flex; align-items:flex-start; gap:10px; padding:8px 0; border-bottom:1px solid var(--surface-2);}
+.log-row:last-child{border-bottom:none;}
+.log-row .dot{margin-top:5px;}
+.log-row-main{flex:1; min-width:0;}
+.log-row-title{font-weight:700; font-variant-numeric:tabular-nums; font-size:12px;}
+.log-row-meta{font-size:9px; color:var(--faint); letter-spacing:.1em; text-transform:uppercase; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.log-row-time{font-size:10px; color:var(--dim); font-variant-numeric:tabular-nums; white-space:nowrap;}
+.log-row-status{font-size:9px; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--dim); white-space:nowrap; padding-top:1px;}
+
+/* ---------- Intercom button ---------- */
+.intercom-btn svg{width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round;}
+
+/* ---------- Modal ---------- */
+.modal-overlay{position:fixed; inset:0; background:rgba(0,0,0,.72); display:flex; align-items:center; justify-content:center; z-index:100; padding:20px;}
+.modal-overlay.hidden{display:none;}
+.modal-box{background:var(--surface); border:1px solid var(--border-strong); border-radius:8px; padding:24px; max-width:360px; width:100%; text-align:center;}
+.modal-box p{font-size:14px; margin:14px 0 22px; line-height:1.7; color:var(--text);}
+.modal-box .pulse-row{display:flex; justify-content:center; gap:6px; margin:6px 0 14px;}
+.modal-box .pulse-row .dot{width:10px; height:10px;}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 860px){
+  .kiosk-body{flex-direction:column;}
+  .camera-panel{width:100%;}
+  .reticle.large{max-width:360px;}
+  .info-panel{width:100%;}
+}
+@media (max-width: 480px){
+  .topbar{flex-direction:column; gap:8px; text-align:center;}
+  .clock{font-size:17px;}
+}

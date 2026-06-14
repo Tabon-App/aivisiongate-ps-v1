@@ -1,0 +1,39 @@
+{
+  "gate": {
+    "name": "GATE A — ทางเข้าหลัก",
+    "village": "หมู่บ้านพฤกษา แอร์พอร์ต-มะลิวัลย์"
+  },
+  "scenarios": {
+    "resident_match": {
+      "demoLabel": "รถลูกบ้าน (ตรงข้อมูล)",
+      "plate": "กฆ 2201 ขอนแก่น",
+      "house": "53/12",
+      "owner": "นาย สมชาย ศรีสุวรรณ",
+      "vehicleInfo": "Toyota Vios สีขาว",
+      "time": "09:41"
+    },
+    "guest_preregistered": {
+      "demoLabel": "แขกตามนัด (Pre-register)",
+      "plate": "กค 9999 ขอนแก่น",
+      "guestName": "คุณวิชัย มั่งมี",
+      "house": "7/1",
+      "expectedDate": "14 มิ.ย. 2569",
+      "time": "09:42"
+    },
+    "visitor_unknown": {
+      "demoLabel": "ผู้มาติดต่อ (ไม่มีข้อมูล)",
+      "plate": "8กษ 3344 กรุงเทพมหานคร",
+      "targetHouse": "53/45",
+      "targetOwner": "นาย วิชัย ทองมาก",
+      "time": "09:45"
+    }
+  },
+  "recentLog": [
+    { "time": "09:41", "house": "53/12",  "plate": "กฆ 2201 ขอนแก่น",       "meta": "RESIDENT · AUTO ENTRY",          "status": "ok",     "statusText": "AUTO" },
+    { "time": "09:38", "house": "53/45",  "plate": "ขฉ 4504 ขอนแก่น",       "meta": "RESIDENT (มอเตอร์ไซค์) · AUTO",   "status": "ok",     "statusText": "AUTO" },
+    { "time": "09:35", "house": "7/1",    "plate": "กค 9999 ขอนแก่น",       "meta": "GUEST · นัดล่วงหน้า",             "status": "ok",     "statusText": "AUTO" },
+    { "time": "09:20", "house": "—",      "plate": "8กษ 3344 กรุงเทพมหานคร", "meta": "VISITOR · DENIED",               "status": "danger", "statusText": "DENIED" },
+    { "time": "09:05", "house": "53/89",  "plate": "กฏ 8907 ขอนแก่น",       "meta": "RESIDENT · AUTO ENTRY",          "status": "ok",     "statusText": "AUTO" },
+    { "time": "08:55", "house": "431/3",  "plate": "3 ขษ 821 กรุงเทพมหานคร", "meta": "RESIDENT · PIN OVERRIDE",        "status": "warn",   "statusText": "PIN" }
+  ]
+}

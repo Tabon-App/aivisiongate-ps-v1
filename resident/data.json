@@ -1,0 +1,58 @@
+{
+  "house": {
+    "number": "431/3",
+    "owner": "คุณ ฐปนัท ใบแสง",
+    "phone": "098-225-4566",
+    "pin": "4313"
+  },
+  "vehicleStatus": {
+    "plate": "กข 1234 ขอนแก่น",
+    "label": "IN COMPOUND · ENTERED 09:41"
+  },
+  "notifications": [
+    {
+      "id": "visitor_request",
+      "demoLabel": "คำขอเข้าพบ",
+      "guestName": "คุณสมชาย ใจดี",
+      "idNumber": "1-XXXX-XXXXX-XX-X",
+      "plate": "กข 1234 ขอนแก่น",
+      "time": "09:41"
+    },
+    {
+      "id": "pin_alert",
+      "demoLabel": "PIN Override",
+      "time": "09:15"
+    },
+    {
+      "id": "guest_arrived",
+      "demoLabel": "แขกมาถึง",
+      "guestName": "คุณวิชัย มั่งมี",
+      "time": "10:02"
+    },
+    {
+      "id": "manual_exit",
+      "demoLabel": "ออกแมนนวล",
+      "time": "14:30"
+    },
+    {
+      "id": "empty",
+      "demoLabel": "ไม่มีคำขอ"
+    }
+  ],
+  "vehicles": [
+    { "plate": "กข 1234 ขอนแก่น", "brand": "Toyota", "color": "ขาว", "type": "รถยนต์" },
+    { "plate": "5กข 678 ขอนแก่น", "brand": "Honda", "color": "เทา", "type": "รถยนต์" }
+  ],
+  "logs": [
+    { "group": "วันนี้ — 14 มิ.ย.", "category": "resident", "time": "09:41", "title": "กข 1234 ขอนแก่น", "meta": "RESIDENT · AUTO ENTRY", "status": "ok", "statusText": "AUTO" },
+    { "group": "วันนี้ — 14 มิ.ย.", "category": "visitor",  "time": "09:38", "title": "3 ขษ 821", "meta": "VISITOR · APPROVED", "status": "live", "statusText": "APPROVED" },
+    { "group": "วันนี้ — 14 มิ.ย.", "category": "visitor",  "time": "08:55", "title": "9 กส 684", "meta": "VISITOR · DENIED", "status": "danger", "statusText": "DENIED" },
+    { "group": "เมื่อวาน — 13 มิ.ย.", "category": "visitor",  "time": "10:02", "title": "กค 9999 ขอนแก่น", "meta": "PRE-REGISTERED · AUTO ENTRY", "status": "ok", "statusText": "AUTO" },
+    { "group": "เมื่อวาน — 13 มิ.ย.", "category": "resident", "time": "09:15", "title": "กข 1234 ขอนแก่น", "meta": "RESIDENT · PIN OVERRIDE", "status": "warn", "statusText": "PIN" },
+    { "group": "เมื่อวาน — 13 มิ.ย.", "category": "visitor",  "time": "14:30", "title": "3 ขษ 821", "meta": "VISITOR · MANUAL EXIT", "status": "warn", "statusText": "MANUAL" }
+  ],
+  "preregisteredGuests": [
+    { "name": "คุณวิชัย มั่งมี", "plate": "กค 9999 ขอนแก่น", "date": "15 มิ.ย. 2569", "status": "pending" },
+    { "name": "คุณสมหญิง รักดี", "plate": "5กข 678 ขอนแก่น", "date": "13 มิ.ย. 2569", "status": "arrived" }
+  ]
+}

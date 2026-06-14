@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>AI Vision Gate — Guard Dashboard</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="dashboard">
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo-mark"></span>
+      <span class="wordmark">AI VISION GATE</span>
+    </div>
+    <div class="station-info" id="station-info"><!-- rendered by app.js --></div>
+    <div class="gate-status-group" id="gate-status-group"><!-- rendered by app.js --></div>
+    <div class="clock" id="clock">--:--:--</div>
+  </header>
+
+  <!-- Alert banner (SOS / incoming call) -->
+  <div class="alert-banner hidden" id="alert-banner"><!-- rendered by app.js --></div>
+
+  <main class="dashboard-grid">
+
+    <!-- Live activity feed -->
+    <section class="feed-panel">
+      <div class="label-row">
+        <span class="label">Live Activity Feed</span>
+        <input type="text" class="feed-search" id="feed-search" placeholder="ค้นหาทะเบียน / บ้านเลขที่...">
+      </div>
+      <div class="feed-list" id="feed-list"><!-- rendered by app.js --></div>
+    </section>
+
+    <!-- Side column: pending approvals + gate control -->
+    <aside class="side-col">
+      <div class="panel" id="pending-panel">
+        <div class="label-row"><span class="label">Pending Approvals</span></div>
+        <div id="pending-list"><!-- rendered by app.js --></div>
+      </div>
+
+      <div class="panel" id="gate-control-panel">
+        <div class="label-row"><span class="label">Gate Control</span></div>
+        <div id="gate-controls"><!-- rendered by app.js --></div>
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- Demo state switcher -->
+  <div class="demo-switcher" id="demo-switcher"><!-- rendered by app.js --></div>
+
+  <!-- Incoming call modal -->
+  <div class="modal-overlay hidden" id="call-modal">
+    <div class="modal-box">
+      <span class="label">Intercom</span>
+      <div class="pulse-row">
+        <span class="dot live pulse"></span>
+        <span class="dot live pulse" style="animation-delay:.2s;"></span>
+        <span class="dot live pulse" style="animation-delay:.4s;"></span>
+      </div>
+      <p id="call-modal-text">กำลังเชื่อมต่อ...</p>
+      <button class="btn btn-ghost" onclick="endCall()">วางสาย</button>
+    </div>
+  </div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "AI Vision Gate — Gate Station",
+  "short_name": "Gate Station",
+  "description": "Smart village access control — Gate Station kiosk by InnoHome",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "any",
+  "icons": []
+}

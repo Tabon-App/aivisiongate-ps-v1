@@ -1,0 +1,12 @@
+{
+  "name": "AI Vision Gate — Admin Dashboard",
+  "short_name": "Admin Dashboard",
+  "description": "Smart village access control — Admin Dashboard by InnoHome",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "any",
+  "icons": []
+}

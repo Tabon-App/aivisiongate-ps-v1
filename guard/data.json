@@ -1,0 +1,35 @@
+{
+  "station": {
+    "name": "ป้อมยาม — รักษาความปลอดภัย",
+    "village": "หมู่บ้านพฤกษา แอร์พอร์ต-มะลิวัลย์"
+  },
+  "gates": [
+    { "id": "gateA", "name": "Gate A — ทางเข้าหลัก" },
+    { "id": "gateB", "name": "Gate B — ทางออก" }
+  ],
+  "activityFeed": [
+    { "time": "09:46", "gate": "Gate A", "house": "53/89", "plate": "กฎ 8907 ขอนแก่น",       "meta": "RESIDENT · AUTO ENTRY",          "status": "ok",     "statusText": "AUTO" },
+    { "time": "09:42", "gate": "Gate B", "house": "53/34", "plate": "1กง 3402 ขอนแก่น",      "meta": "RESIDENT · AUTO EXIT",           "status": "ok",     "statusText": "AUTO" },
+    { "time": "09:41", "gate": "Gate A", "house": "53/12", "plate": "กฆ 2201 ขอนแก่น",       "meta": "RESIDENT · AUTO ENTRY",          "status": "ok",     "statusText": "AUTO" },
+    { "time": "09:38", "gate": "Gate A", "house": "53/45", "plate": "ขฉ 4504 ขอนแก่น",       "meta": "RESIDENT (มอเตอร์ไซค์) · AUTO",   "status": "ok",     "statusText": "AUTO" },
+    { "time": "09:35", "gate": "Gate A", "house": "7/1",   "plate": "กค 9999 ขอนแก่น",       "meta": "GUEST · นัดล่วงหน้า",            "status": "ok",     "statusText": "AUTO" },
+    { "time": "09:20", "gate": "Gate A", "house": "—",     "plate": "8กษ 3344 กรุงเทพมหานคร", "meta": "VISITOR · DENIED",              "status": "danger", "statusText": "DENIED" },
+    { "time": "09:05", "gate": "Gate B", "house": "53/91", "plate": "3กฐ 9109 ขอนแก่น",      "meta": "RESIDENT · AUTO EXIT",           "status": "ok",     "statusText": "AUTO" },
+    { "time": "08:55", "gate": "Gate A", "house": "431/3", "plate": "3 ขษ 821 กรุงเทพมหานคร", "meta": "RESIDENT · PIN OVERRIDE",        "status": "warn",   "statusText": "PIN" }
+  ],
+  "sosScenario": {
+    "house": "53/67",
+    "name": "นาง สมหญิง แก้วมณีรัตน์",
+    "time": "09:50"
+  },
+  "callScenario": {
+    "gate": "Gate A — ทางเข้าหลัก"
+  },
+  "overrideScenario": {
+    "plate": "8กษ 3344 กรุงเทพมหานคร",
+    "targetHouse": "53/45",
+    "targetOwner": "นาย วิชัย ทองมาก",
+    "gate": "Gate A — ทางเข้าหลัก",
+    "time": "09:52"
+  }
+}

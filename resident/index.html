@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>AI Vision Gate — Resident App</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- Status bar -->
+  <div class="statusbar">
+    <span>9:41</span>
+    <span class="dim-row">●●● 100%</span>
+  </div>
+
+  <!-- App bar -->
+  <header class="appbar">
+    <div class="appbar-title">
+      <span class="logo-mark"></span>
+      <span class="wordmark">AI VISION GATE</span>
+    </div>
+    <div class="house-chip"><span class="dot live"></span>431/3</div>
+  </header>
+
+  <!-- Views -->
+  <main class="views">
+
+    <!-- ============ HOME ============ -->
+    <section id="view-home" class="view active">
+      <div class="label-row"><span class="label">Incoming Request</span></div>
+      <div id="notification-card"><!-- rendered by app.js --></div>
+
+      <div class="label-row"><span class="label">ดูตัวอย่างสถานะอื่น (Demo)</span></div>
+      <div class="demo-switcher" id="demo-switcher"><!-- rendered by app.js --></div>
+
+      <div class="label-row"><span class="label">เมนูลัด</span></div>
+      <div class="quick-grid">
+        <button class="quick-item" onclick="showView('guest')">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="1"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+          นัดแขกล่วงหน้า
+        </button>
+        <button class="quick-item" onclick="showView('vehicles')">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16l1.5-5h13L20 16"/><path d="M4 16h16v3H4z"/><circle cx="7.5" cy="19" r="1.5"/><circle cx="16.5" cy="19" r="1.5"/></svg>
+          รถของฉัน
+        </button>
+        <button class="quick-item" onclick="showView('log')">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>
+          ดู Log เข้า-ออก
+        </button>
+        <button class="quick-item sos" onclick="openSOS()">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 17H3z"/><line x1="12" y1="9" x2="12" y2="14"/><circle cx="12" cy="17.3" r="0.6" fill="currentColor" stroke="none"/></svg>
+          SOS ฉุกเฉิน
+        </button>
+      </div>
+
+      <div class="vehicle-status">
+        <span class="dot live"></span>
+        <span class="plate" id="vs-plate"></span>
+        <span class="label" id="vs-label"></span>
+      </div>
+    </section>
+
+    <!-- ============ LOG ============ -->
+    <section id="view-log" class="view">
+      <h1 class="view-title">บันทึกเข้า-ออก</h1>
+      <div class="filter-tabs">
+        <button class="filter-tab active" data-filter="all">All</button>
+        <button class="filter-tab" data-filter="resident">My Vehicle</button>
+        <button class="filter-tab" data-filter="visitor">Visitors</button>
+      </div>
+      <div id="log-list"><!-- rendered by app.js --></div>
+    </section>
+
+    <!-- ============ VEHICLES ============ -->
+    <section id="view-vehicles" class="view">
+      <div class="view-header">
+        <h1 class="view-title" style="margin-bottom:0;">รถของฉัน</h1>
+        <button class="btn-sm" id="btn-add-vehicle">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Vehicle
+        </button>
+      </div>
+
+      <div id="vehicle-list"><!-- rendered by app.js --></div>
+
+      <div class="form-card hidden" id="vehicle-form">
+        <div class="capture-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h4l2-2h6l2 2h4v13H3z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span class="label">Take Photo — Plate Auto-Detected</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ทะเบียนรถ (AI อ่านให้ แก้ไขได้)</label>
+          <input type="text" class="form-input" id="v-plate" value="กข 5678 ขอนแก่น">
+        </div>
+        <div class="form-group">
+          <label class="form-label">จังหวัด</label>
+          <select class="form-select" id="v-province">
+            <option>ขอนแก่น</option>
+            <option>กรุงเทพมหานคร</option>
+            <option>อื่นๆ</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ประเภทรถ</label>
+          <select class="form-select" id="v-type">
+            <option>รถยนต์</option>
+            <option>กระบะ</option>
+            <option>มอเตอร์ไซค์</option>
+            <option>อื่นๆ</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ยี่ห้อ</label>
+          <input type="text" class="form-input" id="v-brand" placeholder="เช่น Toyota">
+        </div>
+        <div class="form-group">
+          <label class="form-label">สีรถ</label>
+          <input type="text" class="form-input" id="v-color" placeholder="เช่น ขาว">
+        </div>
+        <button class="btn btn-primary" onclick="submitVehicle()">บันทึกรถ</button>
+      </div>
+    </section>
+
+    <!-- ============ PRE-REGISTER GUEST ============ -->
+    <section id="view-guest" class="view">
+      <button class="btn-sm" onclick="showView('home')" style="margin-bottom:16px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>
+        Back
+      </button>
+      <h1 class="view-title">นัดแขกล่วงหน้า</h1>
+
+      <div class="form-card">
+        <div class="capture-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h4l2-2h6l2 2h4v13H3z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span class="label">ถ่ายรูปหรือกรอกทะเบียนรถแขก — AI อ่านให้ แก้ไขได้</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ชื่อแขก</label>
+          <input type="text" class="form-input" id="g-name" placeholder="เช่น คุณวิชัย มั่งมี">
+        </div>
+        <div class="form-group">
+          <label class="form-label">ทะเบียนรถแขก</label>
+          <input type="text" class="form-input" id="g-plate" placeholder="เช่น กค 9999 ขอนแก่น">
+        </div>
+        <div class="form-group">
+          <label class="form-label">วันที่นัดหมาย</label>
+          <input type="date" class="form-input" id="g-date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">หมายเหตุ (ถ้ามี)</label>
+          <textarea class="form-textarea" id="g-note" placeholder="..."></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="submitGuest()">ยืนยันนัดแขก</button>
+      </div>
+
+      <div class="label-row"><span class="label">แขกที่นัดไว้</span></div>
+      <div id="guest-list"><!-- rendered by app.js --></div>
+    </section>
+
+    <!-- ============ PROFILE ============ -->
+    <section id="view-profile" class="view">
+      <h1 class="view-title">โปรไฟล์</h1>
+
+      <div class="profile-card">
+        <div class="row">
+          <div class="icon-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 9v11h14V9"/></svg>
+          </div>
+          <div>
+            <div class="name" id="p-house"></div>
+            <div class="sub" id="p-owner"></div>
+            <div class="sub" id="p-phone"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-card">
+        <div class="label-row" style="margin-top:0;"><span class="label">House PIN</span></div>
+        <div class="pin-display">
+          <span class="pin-dots" id="p-pin">••••</span>
+          <button class="icon-btn" id="btn-toggle-pin">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <p style="font-size:11px; color:var(--dim); margin-top:10px; line-height:1.6;">ใช้สำหรับเข้าหมู่บ้านกรณีกล้องอ่านทะเบียนผิดพลาด</p>
+      </div>
+
+      <div class="settings-list">
+        <button class="settings-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 1112 0c0 4 1.5 6 1.5 6H4.5S6 13 6 9z"/><path d="M10 19a2 2 0 004 0"/></svg>
+          การแจ้งเตือน
+          <span class="toggle on" id="toggle-notif"><span class="knob"></span></span>
+        </button>
+        <button class="settings-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3c2.5 2.5 4 6 4 9s-1.5 6.5-4 9c-2.5-2.5-4-6-4-9s1.5-6.5 4-9z"/></svg>
+          ภาษา — ไทย / English
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
+        </button>
+        <button class="settings-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="7.5" r="0.6" fill="currentColor" stroke="none"/></svg>
+          เกี่ยวกับระบบ AI Vision Gate
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
+        </button>
+        <button class="settings-row danger" onclick="showToast('danger','● SIGNED OUT — ออกจากระบบแล้ว')">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          ออกจากระบบ
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-view="home">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-6h4v6"/></svg>
+      <span>หน้าหลัก</span>
+    </button>
+    <button class="nav-item" data-view="log">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>
+      <span>Log</span>
+    </button>
+    <button class="nav-item" data-view="vehicles">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16l1.5-5h13L20 16"/><path d="M4 16h16v3H4z"/><circle cx="7.5" cy="19" r="1.5"/><circle cx="16.5" cy="19" r="1.5"/></svg>
+      <span>รถ</span>
+    </button>
+    <button class="nav-item" data-view="profile">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+      <span>โปรไฟล์</span>
+    </button>
+  </nav>
+
+  <!-- Toast container -->
+  <div id="toast-container"></div>
+
+  <!-- SOS Modal -->
+  <div class="modal-overlay hidden" id="sos-modal">
+    <div class="modal-box">
+      <span class="label">Emergency</span>
+      <p>ยืนยันแจ้งเหตุฉุกเฉินไปยัง รปภ.?</p>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="closeSOS()">ยกเลิก</button>
+        <button class="btn btn-danger" onclick="confirmSOS()">ยืนยัน SOS</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

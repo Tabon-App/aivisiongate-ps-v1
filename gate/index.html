@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>AI Vision Gate — Gate Station</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="kiosk">
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo-mark"></span>
+      <span class="wordmark">AI VISION GATE</span>
+    </div>
+    <div class="gate-info" id="gate-info"><!-- rendered by app.js --></div>
+    <div class="clock" id="clock">--:--:--</div>
+  </header>
+
+  <main class="kiosk-body">
+
+    <!-- Camera / reticle panel -->
+    <section class="camera-panel">
+      <div class="reticle large" id="main-reticle">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <div class="scan-line" id="scan-line"></div>
+        <div class="feed" id="main-feed"><!-- rendered by app.js --></div>
+      </div>
+
+      <div class="plate-readout" id="plate-readout" style="display:none;">
+        <span class="label">Detected Plate</span>
+        <span class="value" id="plate-value"></span>
+      </div>
+
+      <div class="capture-strip" id="capture-strip"><!-- rendered by app.js --></div>
+    </section>
+
+    <!-- Info / status panel -->
+    <aside class="info-panel">
+      <div class="status-block" id="status-block"><!-- rendered by app.js --></div>
+
+      <div class="detail-card" id="detail-card" style="display:none;"><!-- rendered by app.js --></div>
+
+      <div class="countdown-block" id="countdown-block" style="display:none;"><!-- rendered by app.js --></div>
+
+      <div class="log-panel">
+        <div class="label-row"><span class="label">Recent Activity</span></div>
+        <div id="recent-log"><!-- rendered by app.js --></div>
+      </div>
+
+      <button class="btn btn-ghost intercom-btn" onclick="openIntercom()">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h3l2 5-2.5 1.5a11 11 0 005 5L14 13l5 2v3a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/></svg>
+        เรียก รปภ. (Intercom)
+      </button>
+    </aside>
+
+  </main>
+
+  <!-- Demo state switcher -->
+  <div class="demo-switcher" id="demo-switcher"><!-- rendered by app.js --></div>
+
+  <!-- Intercom modal -->
+  <div class="modal-overlay hidden" id="intercom-modal">
+    <div class="modal-box">
+      <span class="label">Intercom</span>
+      <div class="pulse-row">
+        <span class="dot live pulse"></span>
+        <span class="dot live pulse" style="animation-delay:.2s;"></span>
+        <span class="dot live pulse" style="animation-delay:.4s;"></span>
+      </div>
+      <p>กำลังเชื่อมต่อไปยังห้องรักษาความปลอดภัย...</p>
+      <button class="btn btn-ghost" onclick="closeIntercom()">ปิด</button>
+    </div>
+  </div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>
