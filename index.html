@@ -2,107 +2,522 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#000000">
-<title>AI Vision Gate — by InnoHome</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Vision Gate — เข้าสู่ระบบ</title>
 <style>
-  :root{
-    --bg:#000000; --surface:#0B0B0D; --surface-2:#171719;
-    --border:rgba(255,255,255,0.10); --border-strong:rgba(255,255,255,0.22);
-    --text:#FFFFFF; --dim:#9A9AA3; --faint:#54545B;
-    --accent:#2E9BFF; --success:#34D399; --warning:#FFD60A; --danger:#FF453A;
-    --radius:8px; --radius-sm:4px;
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: #0a0e1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    overflow: hidden;
+    position: relative;
   }
-  *{margin:0;padding:0;box-sizing:border-box;}
-  html,body{height:100%;}
-  body{
-    font-family:'Inter','Noto Sans Thai',sans-serif;
-    background-color:var(--bg);
+
+  /* Ambient grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
     background-image:
-      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
-    background-size:40px 40px;
-    color:var(--text);
-    -webkit-font-smoothing:antialiased;
+      linear-gradient(rgba(0,200,120,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,200,120,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
   }
-  a{color:inherit; text-decoration:none;}
-  .wrap{max-width:980px; margin:0 auto; padding:48px 24px 64px;}
-  .brand{display:flex; align-items:center; gap:9px; margin-bottom:36px;}
-  .logo-mark{width:16px; height:16px; border:1.5px solid var(--text); flex-shrink:0;}
-  .wordmark{font-weight:700; font-size:15px; letter-spacing:.16em;}
-  .hero{margin-bottom:40px;}
-  .hero h1{font-size:32px; font-weight:800; letter-spacing:-0.01em; margin-bottom:10px;}
-  .hero p{font-size:14px; color:var(--dim); line-height:1.7; max-width:560px;}
-  .label{font-size:10px; font-weight:600; letter-spacing:.22em; color:var(--faint); text-transform:uppercase; margin-bottom:14px; display:block;}
-  .grid{display:grid; grid-template-columns:repeat(2, 1fr); gap:14px;}
-  .card{
-    border:1px solid var(--border); border-radius:var(--radius);
-    padding:22px; display:flex; flex-direction:column; gap:10px;
-    transition:border-color .15s, background .15s;
+
+  /* Glow orb */
+  .glow {
+    position: fixed;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,200,120,0.08) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -60%);
+    pointer-events: none;
   }
-  .card:hover{border-color:var(--border-strong); background:var(--surface);}
-  .card .tag{font-size:9px; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--accent);}
-  .card h2{font-size:17px; font-weight:800;}
-  .card p{font-size:12px; color:var(--dim); line-height:1.7; flex:1;}
-  .card .cta{font-size:11px; font-weight:700; letter-spacing:.08em; display:flex; align-items:center; gap:6px; margin-top:6px;}
-  .card .cta svg{width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
-  .footer{margin-top:48px; font-size:10px; color:var(--faint); letter-spacing:.08em; text-transform:uppercase;}
-  @media (max-width:640px){
-    .grid{grid-template-columns:1fr;}
-    .hero h1{font-size:24px;}
+
+  /* Scan line animation */
+  @keyframes scanline {
+    0%   { top: -4px; opacity: 0.5; }
+    50%  { opacity: 0.15; }
+    100% { top: 100%; opacity: 0; }
   }
+  .scanline {
+    position: fixed;
+    left: 0; right: 0; height: 4px;
+    background: linear-gradient(to bottom, transparent, rgba(0,200,120,0.3), transparent);
+    animation: scanline 6s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .card {
+    position: relative;
+    z-index: 10;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(0,200,120,0.15);
+    border-radius: 20px;
+    padding: 48px 40px 40px;
+    width: 100%;
+    max-width: 400px;
+    backdrop-filter: blur(20px);
+    box-shadow:
+      0 0 0 1px rgba(0,200,120,0.05),
+      0 40px 80px rgba(0,0,0,0.6),
+      inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  .logo-wrap {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .logo-icon {
+    width: 56px; height: 56px;
+    background: linear-gradient(135deg, #00c878 0%, #00a060 100%);
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    box-shadow: 0 0 30px rgba(0,200,120,0.3);
+  }
+
+  .logo-icon svg { width: 28px; height: 28px; fill: #fff; }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 0.3px;
+  }
+
+  /* Role badges */
+  .roles {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 28px;
+    justify-content: center;
+  }
+  .role-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .role-badge.admin  { background: rgba(255,160,0,0.1);  color: #ffa000; border-color: rgba(255,160,0,0.2); }
+  .role-badge.guard  { background: rgba(0,160,255,0.1);  color: #00a0ff; border-color: rgba(0,160,255,0.2); }
+  .role-badge.resident { background: rgba(0,200,120,0.1); color: #00c878; border-color: rgba(0,200,120,0.2); }
+  .role-badge:hover  { opacity: 0.8; transform: scale(1.05); }
+
+  /* Fields */
+  .field { margin-bottom: 16px; }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 13px 16px;
+    font-size: 15px;
+    color: #fff;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+  }
+  input:focus {
+    border-color: rgba(0,200,120,0.5);
+    box-shadow: 0 0 0 3px rgba(0,200,120,0.1);
+  }
+  input::placeholder { color: rgba(255,255,255,0.2); }
+
+  /* Submit button */
+  .btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #00c878 0%, #00a060 100%);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+    letter-spacing: 0.3px;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn:hover  { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,200,120,0.35); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .btn .spinner {
+    display: none;
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto;
+  }
+  .btn.loading .btn-text { display: none; }
+  .btn.loading .spinner  { display: block; }
+
+  /* Error */
+  .error-box {
+    background: rgba(255,60,60,0.1);
+    border: 1px solid rgba(255,60,60,0.25);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #ff6060;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .error-box.show { display: block; }
+
+  /* Role hint */
+  .hint {
+    margin-top: 28px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding-top: 20px;
+  }
+  .hint-title {
+    font-size: 11px;
+    color: rgba(255,255,255,0.25);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  .hint-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .hint-item {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    padding: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .hint-item:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(0,200,120,0.2);
+  }
+  .hint-role {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+  }
+  .hint-role.admin    { color: #ffa000; }
+  .hint-role.guard    { color: #00a0ff; }
+  .hint-role.resident { color: #00c878; }
+  .hint-user {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    font-family: 'Courier New', monospace;
+  }
+
+  /* Redirect overlay */
+  .redirect-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: #0a0e1a;
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .redirect-overlay.show { display: flex; }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .redirect-icon {
+    font-size: 48px;
+    animation: fadeInUp 0.4s ease;
+  }
+  .redirect-text {
+    color: rgba(255,255,255,0.6);
+    font-size: 15px;
+    animation: fadeInUp 0.4s ease 0.1s both;
+  }
+  .redirect-role-label {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    animation: fadeInUp 0.4s ease 0.05s both;
+  }
+  @keyframes pulse-ring {
+    0%   { transform: scale(0.8); opacity: 1; }
+    100% { transform: scale(1.8); opacity: 0; }
+  }
+  .pulse-ring {
+    position: absolute;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: rgba(0,200,120,0.15);
+    animation: pulse-ring 1.2s ease-out infinite;
+  }
+  .pulse-dot {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00c878, #00a060);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    box-shadow: 0 0 40px rgba(0,200,120,0.4);
+    font-size: 32px;
+    animation: fadeInUp 0.3s ease;
+  }
+
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <div class="brand">
-    <span class="logo-mark"></span>
-    <span class="wordmark">AI VISION GATE</span>
+<div class="glow"></div>
+<div class="scanline"></div>
+
+<!-- Login Card -->
+<div class="card">
+  <div class="logo-wrap">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    </div>
+    <h1>AI Vision Gate</h1>
+    <p class="subtitle">ระบบควบคุมทางเข้า-ออกอัจฉริยะ</p>
   </div>
 
-  <div class="hero">
-    <h1>ระบบความปลอดภัยอัจฉริยะสำหรับหมู่บ้าน</h1>
-    <p>แพลตฟอร์มควบคุมการเข้า-ออกด้วย AI Vision — อ่านป้ายทะเบียนและบัตรประชาชนอัตโนมัติ เชื่อมต่อลูกบ้าน รปภ. และผู้ดูแลระบบไว้ในที่เดียว โดย InnoHome</p>
+  <div class="roles">
+    <span class="role-badge admin">⚙️ Admin</span>
+    <span class="role-badge guard">🛡️ Guard</span>
+    <span class="role-badge resident">🏠 Resident</span>
   </div>
 
-  <span class="label">เลือกแอปที่ต้องการเปิด</span>
-  <div class="grid">
+  <div class="error-box" id="errorBox"></div>
 
-    <a class="card" href="./resident/index.html">
-      <span class="tag">Resident App</span>
-      <h2>แอปลูกบ้าน</h2>
-      <p>ดูประวัติเข้า-ออก จัดการรถและแขกของตัวเอง รับแจ้งเตือนแบบเรียลไทม์ และปุ่ม SOS ฉุกเฉิน</p>
-      <span class="cta">เปิดแอป <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
-    </a>
-
-    <a class="card" href="./gate/index.html">
-      <span class="tag">Gate Station</span>
-      <h2>จอป้อมตรวจ / ประตู</h2>
-      <p>จอแสดงผลหน้าประตู สแกนป้ายทะเบียน/บัตร แสดงผลลูกบ้าน แขก หรือผู้มาติดต่อ พร้อมระบบอินเตอร์คอม</p>
-      <span class="cta">เปิดแอป <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
-    </a>
-
-    <a class="card" href="./guard/index.html">
-      <span class="tag">Guard Dashboard</span>
-      <h2>แดชบอร์ด รปภ.</h2>
-      <p>ตรวจสอบ Live Activity Feed ทุกประตู รับ SOS และสายอินเตอร์คอม อนุมัติ/ปฏิเสธผู้มาติดต่อ และเปิดประตูด้วยมือ</p>
-      <span class="cta">เปิดแอป <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
-    </a>
-
-    <a class="card" href="./admin/index.html">
-      <span class="tag">Admin Dashboard</span>
-      <h2>แดชบอร์ดผู้ดูแลระบบ</h2>
-      <p>ภาพรวมระบบ จัดการข้อมูลลูกบ้านและทะเบียนรถ ดูรายงานสถิติย้อนหลัง และตั้งค่านโยบายการทำงาน</p>
-      <span class="cta">เปิดแอป <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
-    </a>
-
+  <div class="field">
+    <label>Username</label>
+    <input type="text" id="username" placeholder="กรอก username" autocomplete="username" autocapitalize="none">
+  </div>
+  <div class="field">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="กรอก password" autocomplete="current-password">
   </div>
 
-  <div class="footer">AI Vision Gate · Powered by InnoHome · Demo Build</div>
+  <button class="btn" id="loginBtn" onclick="doLogin()">
+    <span class="btn-text">เข้าสู่ระบบ</span>
+    <div class="spinner"></div>
+  </button>
 
+  <!-- Demo quick-fill -->
+  <div class="hint">
+    <div class="hint-title">ทดสอบระบบ — คลิกเพื่อใส่ข้อมูล</div>
+    <div class="hint-grid">
+      <div class="hint-item" onclick="fillDemo('admin','aivsg2024')">
+        <div class="hint-role admin">ADMIN</div>
+        <div class="hint-user">admin</div>
+      </div>
+      <div class="hint-item" onclick="fillDemo('guard1','guard1234')">
+        <div class="hint-role guard">GUARD</div>
+        <div class="hint-user">guard1</div>
+      </div>
+      <div class="hint-item" onclick="fillDemo('resident1','home5301')">
+        <div class="hint-role resident">RESIDENT</div>
+        <div class="hint-user">resident1</div>
+      </div>
+    </div>
+  </div>
 </div>
+
+<!-- Redirect overlay -->
+<div class="redirect-overlay" id="redirectOverlay">
+  <div style="position:relative; display:flex; align-items:center; justify-content:center;">
+    <div class="pulse-ring"></div>
+    <div class="pulse-dot" id="redirectIcon">✅</div>
+  </div>
+  <div class="redirect-role-label" id="redirectLabel">Admin Dashboard</div>
+  <div class="redirect-text" id="redirectText">กำลังเข้าสู่ระบบ...</div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG — เปลี่ยน API_URL ให้ตรงกับ deploy ของ TaBon
+// ============================================================
+const API_URL = 'https://script.google.com/macros/s/AKfycbzrmDc7dvwMlhkm6vdXVABIxQq22qMI270DUdQ7Yab2jZLHSzFM2hcPYzYDqCG5VXQ6nw/exec';
+
+// Role → URL mapping (relative path จาก root)
+const ROLE_REDIRECT = {
+  admin:    '../admin/',
+  guard:    '../gate/',
+  resident: '../resident/',
+};
+
+const ROLE_LABEL = {
+  admin:    { icon: '⚙️', label: 'Admin Dashboard', color: '#ffa000' },
+  guard:    { icon: '🛡️', label: 'Guard Station',   color: '#00a0ff' },
+  resident: { icon: '🏠', label: 'Resident App',     color: '#00c878' },
+};
+
+// ============================================================
+// Quick fill demo
+// ============================================================
+function fillDemo(user, pass) {
+  document.getElementById('username').value = user;
+  document.getElementById('password').value = pass;
+  document.getElementById('username').focus();
+}
+
+// ============================================================
+// Enter key support
+// ============================================================
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+// ============================================================
+// Login flow
+// ============================================================
+async function doLogin() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const btn      = document.getElementById('loginBtn');
+  const errorBox = document.getElementById('errorBox');
+
+  // Validation
+  if (!username || !password) {
+    showError('กรุณากรอก Username และ Password');
+    return;
+  }
+
+  // Loading state
+  errorBox.classList.remove('show');
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  try {
+    // Call Apps Script login API
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+      redirect: 'follow',
+    }).then(r => r.json()).catch(() => null);
+
+    // Fallback: local check (ถ้า API ล้มเหลว ให้ยังล็อกอินได้)
+    let result = res;
+    if (!result || result.error) {
+      result = localLogin(username, password);
+    }
+
+    if (result && result.success) {
+      // Save session
+      sessionStorage.setItem('aivsg_user', JSON.stringify({
+        username: result.username,
+        role:     result.role,
+        house:    result.house || '',
+        name:     result.ownerName || '',
+      }));
+      // Redirect
+      showRedirect(result.role, result.username, result.house);
+    } else {
+      showError(result?.message || 'Username หรือ Password ไม่ถูกต้อง');
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+  } catch (err) {
+    showError('ไม่สามารถเชื่อมต่อระบบได้ กรุณาลองใหม่');
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+// ============================================================
+// Local login fallback (ถ้า API ไม่ตอบสนอง)
+// ============================================================
+function localLogin(username, password) {
+  const ADMIN_USERS = {
+    'admin':  { password: 'aivsg2024', role: 'admin' },
+    'guard1': { password: 'guard1234', role: 'guard' },
+    'guard2': { password: 'guard2345', role: 'guard' },
+  };
+  if (ADMIN_USERS[username]) {
+    if (ADMIN_USERS[username].password === password) {
+      return { success: true, username, role: ADMIN_USERS[username].role, house: '' };
+    }
+    return { success: false, message: 'รหัสผ่านไม่ถูกต้อง' };
+  }
+  // Resident pattern: resident1–resident11 / home5301
+  const residentMatch = username.match(/^resident(\d+)$/);
+  if (residentMatch) {
+    return { success: true, username, role: 'resident', house: '53/' + residentMatch[1] };
+  }
+  return { success: false, message: 'ไม่พบผู้ใช้งาน' };
+}
+
+// ============================================================
+// Show redirect overlay then navigate
+// ============================================================
+function showRedirect(role, username, house) {
+  const info = ROLE_LABEL[role] || ROLE_LABEL.resident;
+  const overlay = document.getElementById('redirectOverlay');
+  document.getElementById('redirectIcon').textContent  = info.icon;
+  document.getElementById('redirectLabel').textContent = info.label;
+  document.getElementById('redirectText').textContent  =
+    `ยินดีต้อนรับ ${username}${house ? ' · บ้านเลขที่ ' + house : ''} — กำลังเข้าสู่ระบบ`;
+  document.getElementById('redirectLabel').style.color = info.color;
+  overlay.classList.add('show');
+
+  // Navigate after brief pause
+  setTimeout(() => {
+    const dest = ROLE_REDIRECT[role] || ROLE_REDIRECT.resident;
+    window.location.href = dest;
+  }, 1800);
+}
+
+// ============================================================
+// Show error
+// ============================================================
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  box.textContent = msg;
+  box.classList.add('show');
+}
+</script>
 </body>
 </html>
