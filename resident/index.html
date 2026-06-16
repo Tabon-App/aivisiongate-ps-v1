@@ -288,9 +288,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Get session
   try {
     const s = JSON.parse(sessionStorage.getItem('aivsg_user') || '{}');
-    if (!s.username){ window.location.href = '/aivsg-ps/'; return; }
+    if (!s.username){ window.location.href = '../'; return; }
     user = s;
-  } catch(e){ window.location.href = '/aivsg-ps/'; return; }
+  } catch(e){ window.location.href = '../'; return; }
 
   document.getElementById('user-name').textContent = user.name || user.username;
   document.getElementById('user-house').textContent = 'บ้านเลขที่ ' + (user.house || '—');
