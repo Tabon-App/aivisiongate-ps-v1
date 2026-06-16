@@ -2,84 +2,837 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#000000">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>AI Vision Gate — Gate Station</title>
-<link rel="manifest" href="manifest.json">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0e1a;color:#fff;font-family:'Segoe UI',Arial,sans-serif;min-height:100vh;overflow-x:hidden}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.06)}
+.topbar-left{display:flex;align-items:center;gap:8px}
+.logo{width:30px;height:30px;background:linear-gradient(135deg,#00c878,#00a060);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.topbar-title{font-size:14px;font-weight:700}
+.topbar-sub{font-size:10px;color:rgba(255,255,255,0.35)}
+.clock-badge{font-size:12px;color:rgba(255,255,255,0.4);font-family:monospace}
+
+/* GATE TOGGLE */
+.gate-toggle{display:flex;margin:12px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.08)}
+.gate-btn{flex:1;padding:11px;text-align:center;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all 0.2s}
+.gate-btn.entry{background:rgba(0,200,120,0.06);color:rgba(0,200,120,0.5)}
+.gate-btn.entry.active{background:linear-gradient(135deg,#00c878,#00a060);color:#fff}
+.gate-btn.exit{background:rgba(255,80,80,0.06);color:rgba(255,80,80,0.4)}
+.gate-btn.exit.active{background:linear-gradient(135deg,#ff5050,#cc0000);color:#fff}
+
+/* CAMERA */
+.camera-wrap{margin:0 12px;border-radius:14px;overflow:hidden;position:relative;background:#000;aspect-ratio:16/9}
+video{width:100%;height:100%;object-fit:cover}
+canvas{display:none}
+.cam-overlay{position:absolute;inset:0;pointer-events:none}
+
+/* Scan box */
+.scan-box{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70%;height:50%;border:2px solid rgba(0,200,120,0.5);border-radius:6px}
+.scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(to right,transparent,#00c878,transparent);animation:scan 2s linear infinite}
+@keyframes scan{0%{top:0}100%{top:100%}}
+.corner{position:absolute;width:14px;height:14px}
+.corner.tl{top:-1px;left:-1px;border-top:3px solid #00c878;border-left:3px solid #00c878}
+.corner.tr{top:-1px;right:-1px;border-top:3px solid #00c878;border-right:3px solid #00c878}
+.corner.bl{bottom:-1px;left:-1px;border-bottom:3px solid #00c878;border-left:3px solid #00c878}
+.corner.br{bottom:-1px;right:-1px;border-bottom:3px solid #00c878;border-right:3px solid #00c878}
+
+/* Status bar on camera */
+.cam-statusbar{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.7));padding:10px 12px;display:flex;justify-content:space-between;align-items:center}
+.cam-dot-wrap{display:flex;align-items:center;gap:6px;font-size:11px}
+.cam-dot{width:8px;height:8px;border-radius:50%;background:#888}
+.cam-dot.live{background:#00c878;animation:blink 1s infinite}
+.cam-dot.scanning{background:#ffa000;animation:blink 0.3s infinite}
+.cam-dot.detected{background:#ff5050}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.motion-bar-wrap{display:flex;align-items:center;gap:6px;font-size:10px;color:rgba(255,255,255,0.5)}
+.motion-bar{width:60px;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden}
+.motion-fill{height:100%;background:#00c878;transition:width 0.15s;width:0%}
+
+/* AUTO SWITCH ROW */
+.auto-row{display:flex;align-items:center;justify-content:space-between;margin:10px 12px;padding:10px 14px;background:rgba(0,200,120,0.06);border:1px solid rgba(0,200,120,0.15);border-radius:12px}
+.auto-label{font-size:13px;font-weight:600;color:#00c878}
+.auto-sub{font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px}
+.toggle-sw{width:44px;height:24px;background:rgba(255,255,255,0.1);border-radius:12px;cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0}
+.toggle-sw.on{background:#00c878}
+.toggle-sw::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left 0.2s}
+.toggle-sw.on::after{left:23px}
+
+/* SENSITIVITY ROW */
+.sens-row{display:flex;align-items:center;gap:10px;margin:6px 12px;font-size:11px;color:rgba(255,255,255,0.4)}
+.sens-row input{flex:1;accent-color:#00c878}
+.sens-val{min-width:20px;text-align:right;color:#00c878;font-weight:700}
+
+/* MANUAL TABS */
+.mode-tabs{display:flex;gap:6px;padding:8px 12px}
+.mode-tab{flex:1;padding:9px;border-radius:8px;border:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.02);font-size:11px;font-weight:600;color:rgba(255,255,255,0.35);cursor:pointer;text-align:center;transition:all 0.2s}
+.mode-tab.active{background:rgba(0,200,120,0.1);border-color:rgba(0,200,120,0.25);color:#00c878}
+
+/* ACTION ROW */
+.action-row{display:flex;gap:8px;margin:0 12px 10px}
+.btn-capture{flex:2;padding:14px;background:linear-gradient(135deg,#00c878,#00a060);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;cursor:pointer}
+.btn-capture:disabled{opacity:0.35;cursor:not-allowed}
+.btn-sm2{flex:1;padding:14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:rgba(255,255,255,0.7);font-size:12px;font-weight:600;cursor:pointer}
+.btn-pin{flex:1;padding:14px;background:rgba(255,160,0,0.08);border:1px solid rgba(255,160,0,0.2);border-radius:10px;color:#ffa000;font-size:12px;font-weight:600;cursor:pointer}
+input[type=file]{display:none}
+
+/* MANUAL INPUT */
+.manual-wrap{margin:0 12px 10px;display:none}
+.manual-wrap.show{display:flex;gap:8px}
+.manual-input{flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;font-size:15px;color:#fff;outline:none;font-family:monospace;letter-spacing:1px}
+.manual-input:focus{border-color:rgba(0,200,120,0.4)}
+.manual-input::placeholder{color:rgba(255,255,255,0.18);letter-spacing:0}
+.btn-go{padding:12px 18px;background:linear-gradient(135deg,#00c878,#00a060);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer}
+
+/* RESULT */
+.result-panel{margin:0 12px 10px;border-radius:14px;overflow:hidden;display:none}
+.result-panel.show{display:block}
+.status-card{padding:16px;border-radius:14px;border:1px solid}
+.status-card.resident{background:rgba(0,200,120,0.07);border-color:rgba(0,200,120,0.2)}
+.status-card.visitor{background:rgba(255,160,0,0.07);border-color:rgba(255,160,0,0.2)}
+.status-card.unknown{background:rgba(255,80,80,0.07);border-color:rgba(255,80,80,0.2)}
+.status-card.waiting{background:rgba(100,100,255,0.07);border-color:rgba(100,100,255,0.2)}
+
+.s-icon{font-size:28px;margin-bottom:6px}
+.s-title{font-size:17px;font-weight:700;margin-bottom:3px}
+.s-sub{font-size:12px;color:rgba(255,255,255,0.45)}
+.plate-box{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px;text-align:center;margin:10px 0}
+.plate-txt{font-size:22px;font-weight:800;letter-spacing:2px;font-family:monospace}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.info-item{background:rgba(255,255,255,0.03);border-radius:6px;padding:8px}
+.info-lbl{font-size:9px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px}
+.info-val{font-size:13px;font-weight:600}
+.action-btns{display:flex;gap:6px;margin-top:10px}
+.btn-open{flex:1;padding:12px;background:linear-gradient(135deg,#00c878,#00a060);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer}
+.btn-deny{flex:1;padding:12px;background:rgba(255,80,80,0.12);border:1px solid rgba(255,80,80,0.25);border-radius:8px;color:#ff5050;font-size:13px;font-weight:700;cursor:pointer}
+.btn-scan-id{width:100%;padding:12px;background:rgba(255,160,0,0.1);border:1px solid rgba(255,160,0,0.25);border-radius:8px;color:#ffa000;font-size:13px;font-weight:700;cursor:pointer;margin-top:6px}
+.cd-wrap{text-align:center;padding:12px}
+.cd-num{font-size:44px;font-weight:800;color:#00c878}
+.cd-lbl{font-size:12px;color:rgba(255,255,255,0.35);margin-top:2px}
+.thumb{width:100%;border-radius:8px;margin-bottom:10px;max-height:160px;object-fit:cover}
+
+/* LOG */
+.log-strip{margin:0 12px 12px;padding:10px 14px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:10px}
+.log-title{font-size:10px;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px}
+.log-item{font-size:11px;color:rgba(255,255,255,0.45);padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;justify-content:space-between;gap:8px}
+.log-item:last-child{border:none}
+.log-plate{color:#fff;font-weight:600;font-family:monospace;font-size:12px}
+.log-ok{color:#00c878}.log-warn{color:#ffa000}.log-err{color:#ff5050}
+
+/* PIN PAD */
+.pin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:100;align-items:center;justify-content:center}
+.pin-overlay.show{display:flex}
+.pin-modal{background:#141828;border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:24px;width:calc(100% - 32px);max-width:340px}
+.pin-title{text-align:center;font-size:17px;font-weight:700;margin-bottom:16px}
+.pin-display{background:rgba(255,255,255,0.04);border-radius:8px;padding:12px;text-align:center;font-size:26px;font-weight:700;letter-spacing:8px;margin-bottom:14px;min-height:52px}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pin-key{padding:16px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.07);border-radius:10px;font-size:19px;font-weight:700;cursor:pointer;text-align:center;transition:all 0.15s}
+.pin-key:active{background:rgba(0,200,120,0.2);transform:scale(0.95)}
+.pin-key.del{color:#ff5050}.pin-key.ok{background:rgba(0,200,120,0.12);color:#00c878}
+.pin-cancel{width:100%;margin-top:10px;padding:11px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:8px;color:rgba(255,255,255,0.4);font-size:13px;cursor:pointer}
+
+/* LOADING */
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+.loading-overlay.show{display:flex}
+.spinner{width:44px;height:44px;border:4px solid rgba(255,255,255,0.08);border-top-color:#00c878;border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-txt{font-size:14px;color:rgba(255,255,255,0.55)}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a2035;border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 18px;font-size:13px;z-index:300;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;max-width:90vw}
+.toast.show{opacity:1}
+
+/* AUTO STATUS BADGE */
+.auto-status{position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.65);border-radius:8px;padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:0.5px}
+.auto-status.on{color:#00c878;border:1px solid rgba(0,200,120,0.3)}
+.auto-status.off{color:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.1)}
+</style>
 </head>
 <body>
-<div class="kiosk">
 
-  <!-- Top bar -->
-  <header class="topbar">
-    <div class="brand">
-      <span class="logo-mark"></span>
-      <span class="wordmark">AI VISION GATE</span>
-    </div>
-    <div class="gate-info" id="gate-info"><!-- rendered by app.js --></div>
-    <div class="clock" id="clock">--:--:--</div>
-  </header>
-
-  <main class="kiosk-body">
-
-    <!-- Camera / reticle panel -->
-    <section class="camera-panel">
-      <div class="reticle large" id="main-reticle">
-        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
-        <div class="scan-line" id="scan-line"></div>
-        <div class="feed" id="main-feed"><!-- rendered by app.js --></div>
-      </div>
-
-      <div class="plate-readout" id="plate-readout" style="display:none;">
-        <span class="label">Detected Plate</span>
-        <span class="value" id="plate-value"></span>
-      </div>
-
-      <div class="capture-strip" id="capture-strip"><!-- rendered by app.js --></div>
-    </section>
-
-    <!-- Info / status panel -->
-    <aside class="info-panel">
-      <div class="status-block" id="status-block"><!-- rendered by app.js --></div>
-
-      <div class="detail-card" id="detail-card" style="display:none;"><!-- rendered by app.js --></div>
-
-      <div class="countdown-block" id="countdown-block" style="display:none;"><!-- rendered by app.js --></div>
-
-      <div class="log-panel">
-        <div class="label-row"><span class="label">Recent Activity</span></div>
-        <div id="recent-log"><!-- rendered by app.js --></div>
-      </div>
-
-      <button class="btn btn-ghost intercom-btn" onclick="openIntercom()">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h3l2 5-2.5 1.5a11 11 0 005 5L14 13l5 2v3a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/></svg>
-        เรียก รปภ. (Intercom)
-      </button>
-    </aside>
-
-  </main>
-
-  <!-- Demo state switcher -->
-  <div class="demo-switcher" id="demo-switcher"><!-- rendered by app.js --></div>
-
-  <!-- Intercom modal -->
-  <div class="modal-overlay hidden" id="intercom-modal">
-    <div class="modal-box">
-      <span class="label">Intercom</span>
-      <div class="pulse-row">
-        <span class="dot live pulse"></span>
-        <span class="dot live pulse" style="animation-delay:.2s;"></span>
-        <span class="dot live pulse" style="animation-delay:.4s;"></span>
-      </div>
-      <p>กำลังเชื่อมต่อไปยังห้องรักษาความปลอดภัย...</p>
-      <button class="btn btn-ghost" onclick="closeIntercom()">ปิด</button>
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">🛡️</div>
+    <div>
+      <div class="topbar-title">Gate Station</div>
+      <div class="topbar-sub" id="guard-name">Guard</div>
     </div>
   </div>
-
+  <div class="clock-badge" id="clock">--:--:--</div>
 </div>
-<script src="app.js"></script>
+
+<div class="gate-toggle">
+  <button class="gate-btn entry active" onclick="setGate('entry')">🔵 ขาเข้า ENTRY</button>
+  <button class="gate-btn exit" onclick="setGate('exit')">🔴 ขาออก EXIT</button>
+</div>
+
+<!-- CAMERA -->
+<div class="camera-wrap" id="camera-wrap">
+  <video id="video" autoplay playsinline muted></video>
+  <canvas id="canvas-hidden" style="display:none"></canvas>
+  <canvas id="canvas-motion" style="display:none"></canvas>
+  <div class="cam-overlay">
+    <div class="scan-box">
+      <div class="scan-line"></div>
+      <div class="corner tl"></div><div class="corner tr"></div>
+      <div class="corner bl"></div><div class="corner br"></div>
+    </div>
+  </div>
+  <div class="auto-status off" id="auto-badge">AUTO OFF</div>
+  <div class="cam-statusbar">
+    <div class="cam-dot-wrap">
+      <div class="cam-dot" id="cam-dot"></div>
+      <span id="cam-status">กำลังเริ่มกล้อง...</span>
+    </div>
+    <div class="motion-bar-wrap">
+      <span>Motion</span>
+      <div class="motion-bar"><div class="motion-fill" id="motion-fill"></div></div>
+      <span id="motion-pct">0%</span>
+    </div>
+  </div>
+</div>
+
+<!-- AUTO TOGGLE -->
+<div class="auto-row">
+  <div>
+    <div class="auto-label">🤖 Auto-Scan Mode</div>
+    <div class="auto-sub">ตรวจจับรถอัตโนมัติ — ไม่ต้องกดปุ่ม</div>
+  </div>
+  <div class="toggle-sw" id="auto-toggle" onclick="toggleAuto()"></div>
+</div>
+
+<!-- SENSITIVITY -->
+<div class="sens-row" id="sens-row" style="display:none">
+  <span>ความไว:</span>
+  <input type="range" id="sens-slider" min="1" max="10" value="4" oninput="updateSens(this.value)">
+  <span class="sens-val" id="sens-val">4</span>
+  <span>| Cooldown:</span>
+  <input type="range" id="cooldown-slider" min="3" max="30" value="10" oninput="updateCooldown(this.value)">
+  <span class="sens-val" id="cooldown-val">10s</span>
+</div>
+
+<!-- MODE TABS -->
+<div class="mode-tabs">
+  <div class="mode-tab active" id="tab-camera" onclick="setMode('camera')">📷 กล้อง</div>
+  <div class="mode-tab" id="tab-manual" onclick="setMode('manual')">⌨️ พิมพ์</div>
+  <div class="mode-tab" id="tab-active" onclick="setMode('active')">🚗 ในหมู่บ้าน</div>
+</div>
+
+<!-- MANUAL INPUT -->
+<div class="manual-wrap" id="manual-wrap">
+  <input class="manual-input" id="manual-plate" type="text" placeholder="เช่น กษ 1234 ขอนแก่น" autocomplete="off">
+  <button class="btn-go" onclick="manualCheck()">ตรวจ</button>
+</div>
+
+<!-- ACTION ROW -->
+<div class="action-row" id="action-row">
+  <button class="btn-capture" id="btn-capture" onclick="captureAndScan()">📷 ถ่ายภาพ &amp; สแกน</button>
+  <input type="file" id="file-upload" accept="image/*" onchange="uploadScan(this)">
+  <button class="btn-sm2" onclick="document.getElementById('file-upload').click()">🖼️</button>
+  <button class="btn-pin" onclick="showPinPad()">🔢 PIN</button>
+</div>
+
+<!-- RESULT -->
+<div class="result-panel" id="result-panel"></div>
+
+<!-- LOG -->
+<div class="log-strip">
+  <div class="log-title">บันทึกวันนี้</div>
+  <div id="log-list"><div style="font-size:11px;color:rgba(255,255,255,0.2);text-align:center;padding:6px">ยังไม่มีบันทึก</div></div>
+</div>
+
+<!-- PIN PAD -->
+<div class="pin-overlay" id="pin-overlay">
+  <div class="pin-modal">
+    <div class="pin-title">🔢 ป้อน PIN ประจำบ้าน</div>
+    <div class="pin-display" id="pin-display">_ _ _ _</div>
+    <div class="pin-grid">
+      <div class="pin-key" onclick="pinKey('1')">1</div><div class="pin-key" onclick="pinKey('2')">2</div><div class="pin-key" onclick="pinKey('3')">3</div>
+      <div class="pin-key" onclick="pinKey('4')">4</div><div class="pin-key" onclick="pinKey('5')">5</div><div class="pin-key" onclick="pinKey('6')">6</div>
+      <div class="pin-key" onclick="pinKey('7')">7</div><div class="pin-key" onclick="pinKey('8')">8</div><div class="pin-key" onclick="pinKey('9')">9</div>
+      <div class="pin-key del" onclick="pinDel()">⌫</div><div class="pin-key" onclick="pinKey('0')">0</div><div class="pin-key ok" onclick="pinSubmit()">✓</div>
+    </div>
+    <button class="pin-cancel" onclick="hidePinPad()">ยกเลิก</button>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="load-txt" id="load-txt">กำลังประมวลผล...</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const API_URL = 'https://script.google.com/macros/s/AKfycbzrmDc7dvwMlhkm6vdXVABIxQq22qMI270DUdQ7Yab2jZLHSzFM2hcPYzYDqCG5VXQ6nw/exec';
+
+// ============================================================
+// STATE
+// ============================================================
+let gateMode    = 'entry';
+let scanMode    = 'camera';
+let autoMode    = false;
+let stream      = null;
+let motionTimer = null;
+let prevFrame   = null;
+let cooldown    = false;
+let cooldownSec = 10;
+let sensitivity = 4;      // 1-10 (ยิ่งสูง = ไวมาก = threshold ต่ำ)
+let pinBuffer   = '';
+let countdownT  = null;
+let sessionLogs = [];
+let guardInfo   = { username:'guard1', role:'guard' };
+let wakeLock    = null;
+let isScanning  = false;
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    const s = JSON.parse(sessionStorage.getItem('aivsg_user') || '{}');
+    if (s.username) { guardInfo = s; document.getElementById('guard-name').textContent = s.username; }
+  } catch(e){}
+  startCamera();
+  updateClock();
+  setInterval(updateClock, 1000);
+});
+
+function updateClock(){
+  const n = new Date();
+  document.getElementById('clock').textContent =
+    [n.getHours(),n.getMinutes(),n.getSeconds()].map(v=>v.toString().padStart(2,'0')).join(':');
+}
+
+// ============================================================
+// CAMERA
+// ============================================================
+async function startCamera(){
+  setCamStatus('กำลังเปิดกล้อง...', 'off');
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video:{ facingMode:'environment', width:{ideal:1280}, height:{ideal:720} }
+    });
+    document.getElementById('video').srcObject = stream;
+    setCamStatus('กล้องพร้อม', 'live');
+  } catch(e){
+    setCamStatus('ไม่พบกล้อง — ใช้อัปโหลด', 'off');
+    document.getElementById('btn-capture').disabled = true;
+  }
+}
+
+function setCamStatus(text, state){
+  document.getElementById('cam-status').textContent = text;
+  const dot = document.getElementById('cam-dot');
+  dot.className = 'cam-dot' + (state === 'live' ? ' live' : state === 'scanning' ? ' scanning' : '');
+}
+
+// ============================================================
+// AUTO-SCAN TOGGLE
+// ============================================================
+function toggleAuto(){
+  autoMode = !autoMode;
+  const sw = document.getElementById('auto-toggle');
+  const badge = document.getElementById('auto-badge');
+  const sensRow = document.getElementById('sens-row');
+  sw.classList.toggle('on', autoMode);
+  badge.className = 'auto-status ' + (autoMode ? 'on' : 'off');
+  badge.textContent = autoMode ? '🤖 AUTO ON' : 'AUTO OFF';
+  sensRow.style.display = autoMode ? 'flex' : 'none';
+
+  if (autoMode){
+    startAutoScan();
+    acquireWakeLock();
+    showToast('🤖 Auto-Scan เปิดแล้ว — จะสแกนทุกครั้งที่เจอรถ');
+  } else {
+    stopAutoScan();
+    releaseWakeLock();
+    setCamStatus('กล้องพร้อม', 'live');
+    showToast('⏸️ Auto-Scan ปิดแล้ว');
+  }
+}
+
+function updateSens(v){ sensitivity = parseInt(v); document.getElementById('sens-val').textContent = v; }
+function updateCooldown(v){ cooldownSec = parseInt(v); document.getElementById('cooldown-val').textContent = v+'s'; }
+
+// ============================================================
+// MOTION DETECTION LOOP
+// ============================================================
+function startAutoScan(){
+  stopAutoScan();
+  prevFrame = null;
+  motionTimer = setInterval(motionCheck, 500); // ตรวจทุก 0.5 วิ
+}
+
+function stopAutoScan(){
+  if (motionTimer){ clearInterval(motionTimer); motionTimer = null; }
+  document.getElementById('motion-fill').style.width = '0%';
+  document.getElementById('motion-pct').textContent = '0%';
+}
+
+function motionCheck(){
+  if (cooldown || isScanning) return;
+  const video = document.getElementById('video');
+  if (!video.videoWidth) return;
+
+  const mc = document.getElementById('canvas-motion');
+  const W = 160, H = 90; // low-res สำหรับ motion detection
+  mc.width = W; mc.height = H;
+  const ctx = mc.getContext('2d');
+  ctx.drawImage(video, 0, 0, W, H);
+  const cur = ctx.getImageData(0, 0, W, H);
+
+  if (!prevFrame){ prevFrame = cur; return; }
+
+  // เปรียบเทียบ pixel — นับจำนวน pixel ที่เปลี่ยน
+  let changed = 0;
+  const total = W * H;
+  const thresh = 30; // pixel diff threshold
+  for (let i = 0; i < cur.data.length; i += 4){
+    const dr = Math.abs(cur.data[i]   - prevFrame.data[i]);
+    const dg = Math.abs(cur.data[i+1] - prevFrame.data[i+1]);
+    const db = Math.abs(cur.data[i+2] - prevFrame.data[i+2]);
+    if (dr + dg + db > thresh) changed++;
+  }
+  prevFrame = cur;
+
+  const motionPct = changed / total; // 0.0 - 1.0
+  const display = Math.round(motionPct * 100);
+  document.getElementById('motion-fill').style.width = Math.min(display * 3, 100) + '%';
+  document.getElementById('motion-pct').textContent = display + '%';
+
+  // threshold ขึ้นกับ sensitivity (1=ต้องการ motion เยอะ, 10=ไวมาก)
+  // sensitivity 1 = ต้องการ 15% motion, sensitivity 10 = แค่ 3%
+  const triggerThreshold = (16 - sensitivity) / 100;
+
+  if (motionPct >= triggerThreshold){
+    setCamStatus('🚗 พบวัตถุ — กำลังสแกน...', 'scanning');
+    triggerAutoScan();
+  }
+}
+
+async function triggerAutoScan(){
+  if (isScanning) return;
+  isScanning = true;
+  cooldown = true;
+
+  // ถ่ายภาพ full resolution
+  const b64 = captureFrame();
+  setCamStatus('🔍 Gemini กำลังวิเคราะห์...', 'scanning');
+
+  try {
+    const prompt = 'อ่านทะเบียนรถในภาพ ตอบแค่ตัวเลขและตัวอักษรบนป้ายทะเบียน เช่น "กษ 1234 ขอนแก่น" ถ้าไม่มีรถหรืออ่านไม่ได้ให้ตอบว่า "NONE"';
+    const res = await postAPI('scanImage', { image: b64, prompt });
+    const plate = (res.result || '').trim();
+
+    if (!plate || plate === 'NONE' || plate === 'UNREADABLE'){
+      setCamStatus('ไม่เจอทะเบียน — รอรถใหม่', 'live');
+      // Cooldown สั้นลงถ้าไม่เจอ
+      setTimeout(() => { cooldown = false; isScanning = false; setCamStatus('กล้องพร้อม', 'live'); }, 3000);
+      return;
+    }
+
+    // พบทะเบียน!
+    setCamStatus(`✅ พบ: ${plate}`, 'live');
+    showToast(`🚗 พบทะเบียน: ${plate}`);
+    await checkPlate(plate, b64);
+  } catch(e){
+    setCamStatus('❌ Error — รอรถใหม่', 'live');
+    showToast('❌ ' + e.message);
+  }
+
+  // Cooldown ก่อนสแกนใหม่
+  setTimeout(() => {
+    cooldown = false;
+    isScanning = false;
+    prevFrame = null; // reset frame เพื่อเทียบใหม่
+    if (autoMode) setCamStatus('กล้องพร้อม — รอรถ', 'live');
+  }, cooldownSec * 1000);
+}
+
+// ============================================================
+// WAKE LOCK (ป้องกันหน้าจอดับ)
+// ============================================================
+async function acquireWakeLock(){
+  try {
+    if ('wakeLock' in navigator){
+      wakeLock = await navigator.wakeLock.request('screen');
+      showToast('🔆 Wake Lock เปิด — หน้าจอจะไม่ดับ');
+    }
+  } catch(e){ console.log('WakeLock not supported'); }
+}
+
+function releaseWakeLock(){
+  if (wakeLock){ wakeLock.release(); wakeLock = null; }
+}
+
+// ============================================================
+// MANUAL CAPTURE
+// ============================================================
+function captureFrame(){
+  const video = document.getElementById('video');
+  const c = document.getElementById('canvas-hidden');
+  c.width = video.videoWidth || 1280;
+  c.height = video.videoHeight || 720;
+  c.getContext('2d').drawImage(video, 0, 0);
+  return c.toDataURL('image/jpeg', 0.85).split(',')[1];
+}
+
+async function captureAndScan(){
+  const b64 = captureFrame();
+  await scanImage(b64);
+}
+
+async function uploadScan(input){
+  if (!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = async e => { await scanImage(e.target.result.split(',')[1]); };
+  reader.readAsDataURL(input.files[0]);
+}
+
+async function scanImage(b64){
+  showLoading('Gemini AI กำลังอ่านทะเบียน...');
+  try {
+    const prompt = 'อ่านทะเบียนรถในภาพ ตอบแค่ตัวเลขและตัวอักษรบนป้ายทะเบียน เช่น "กษ 1234 ขอนแก่น" ถ้าอ่านไม่ได้ให้ตอบว่า "UNREADABLE"';
+    const res = await postAPI('scanImage', { image: b64, prompt });
+    hideLoading();
+    const plate = (res.result||'').trim();
+    if (!plate || plate === 'UNREADABLE'){ showResult_unreadable(b64); return; }
+    await checkPlate(plate, b64);
+  } catch(e){ hideLoading(); showToast('❌ ' + e.message); }
+}
+
+// ============================================================
+// GATE / MODE
+// ============================================================
+function setGate(mode){
+  gateMode = mode;
+  document.querySelectorAll('.gate-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.gate-btn.' + mode).classList.add('active');
+  clearResult();
+  document.getElementById('btn-capture').textContent = mode === 'entry' ? '📷 ถ่ายภาพ & สแกน' : '📷 ถ่ายภาพขาออก';
+}
+
+function setMode(mode){
+  scanMode = mode;
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+mode).classList.add('active');
+  document.getElementById('camera-wrap').style.display = mode === 'active' ? 'none' : 'block';
+  document.getElementById('action-row').style.display  = mode === 'active' ? 'none' : 'flex';
+  document.getElementById('manual-wrap').className = mode === 'manual' ? 'manual-wrap show' : 'manual-wrap';
+  document.getElementById('auto-row').style.display = mode === 'active' ? 'none' : 'flex';
+  if (mode === 'active') loadActiveVehicles();
+  clearResult();
+}
+
+// ============================================================
+// CHECK PLATE
+// ============================================================
+async function manualCheck(){
+  const plate = document.getElementById('manual-plate').value.trim();
+  if (!plate){ showToast('กรุณากรอกทะเบียน'); return; }
+  await checkPlate(plate, null);
+}
+
+async function checkPlate(plate, b64){
+  showLoading('กำลังตรวจสอบฐานข้อมูล...');
+  try {
+    let res;
+    if (gateMode === 'entry'){
+      res = await getAPI('checkPlate', { plate });
+      hideLoading();
+      if (res.found && res.type === 'resident')        showResult_resident(plate, res, b64);
+      else if (res.found && res.type === 'expected')    showResult_expected(plate, res, b64);
+      else                                              showResult_visitor(plate, res, b64);
+    } else {
+      res = await getAPI('checkPlateExit', { plate });
+      hideLoading();
+      res.canExit ? showResult_exit(plate, res, b64) : showResult_exit_notfound(plate, b64);
+    }
+  } catch(e){ hideLoading(); showToast('❌ ' + e.message); }
+}
+
+// ============================================================
+// RESULTS
+// ============================================================
+function img(b64){ return b64 ? `<img src="data:image/jpeg;base64,${b64}" class="thumb">` : ''; }
+
+function showResult_resident(plate, d, b64){
+  setResult(`
+    ${img(b64)}
+    <div class="status-card resident">
+      <div class="s-icon">✅</div>
+      <div class="s-title">ลูกบ้าน — เปิดอัตโนมัติ</div>
+      <div class="s-sub">${d.owner||''} · บ้าน ${d.house||''}</div>
+      <div class="plate-box"><div class="plate-txt">${plate}</div></div>
+      <div class="info-grid">
+        <div class="info-item"><div class="info-lbl">ยี่ห้อ/สี</div><div class="info-val">${d.brand||'—'} ${d.color||''}</div></div>
+        <div class="info-item"><div class="info-lbl">เบอร์โทร</div><div class="info-val">${d.phone||'—'}</div></div>
+      </div>
+      <div class="action-btns">
+        <button class="btn-open" onclick="openGate('${plate}','resident','${d.house||''}','${d.phone||''}','${d.brand||''}','${d.color||''}')">🔓 บันทึก &amp; เปิดประตู</button>
+        <button class="btn-deny" onclick="clearResult()">✕</button>
+      </div>
+    </div>`);
+}
+
+function showResult_expected(plate, d, b64){
+  setResult(`
+    ${img(b64)}
+    <div class="status-card resident">
+      <div class="s-icon">📋</div>
+      <div class="s-title">แขกนัดล่วงหน้า — เปิดอัตโนมัติ</div>
+      <div class="s-sub">${d.guestName||''} มาหาบ้าน ${d.house||''}</div>
+      <div class="plate-box"><div class="plate-txt">${plate}</div></div>
+      <div class="action-btns">
+        <button class="btn-open" onclick="openGate('${plate}','expected','${d.house||''}','','','')">🔓 บันทึก &amp; เปิดประตู</button>
+        <button class="btn-deny" onclick="clearResult()">✕</button>
+      </div>
+    </div>`);
+}
+
+function showResult_visitor(plate, d, b64){
+  const hist = (d.history||[]).map(h => `<div class="log-item"><span class="log-plate">${h.date}</span><span>${h.house}</span></div>`).join('') ||
+    '<div style="font-size:11px;color:rgba(255,255,255,0.25)">ไม่พบประวัติ</div>';
+  setResult(`
+    ${img(b64)}
+    <div class="status-card visitor">
+      <div class="s-icon">⚠️</div>
+      <div class="s-title">ผู้มาติดต่อ — ตรวจสอบด้วย</div>
+      <div class="s-sub">ไม่พบในระบบ กรุณาสแกนบัตรประชาชน</div>
+      <div class="plate-box"><div class="plate-txt">${plate}</div></div>
+      <div class="log-strip" style="margin:8px 0 0;padding:8px 10px">
+        <div class="log-title">ประวัติก่อนหน้า</div>${hist}
+      </div>
+      <button class="btn-scan-id" onclick="startIdScan('${plate}')">🪪 สแกนบัตรประชาชน (Gemini)</button>
+      <div class="action-btns" style="margin-top:6px">
+        <button class="btn-open" style="background:rgba(255,160,0,0.15);border:1px solid rgba(255,160,0,0.3);color:#ffa000" onclick="openGate('${plate}','ผู้มาติดต่อ','','','','')">🔓 อนุญาต (ไม่สแกน)</button>
+        <button class="btn-deny" onclick="clearResult()">✕</button>
+      </div>
+    </div>`);
+}
+
+function showResult_unreadable(b64){
+  setResult(`
+    ${img(b64)}
+    <div class="status-card unknown">
+      <div class="s-icon">❓</div>
+      <div class="s-title">อ่านทะเบียนไม่ได้</div>
+      <div class="s-sub">ภาพไม่ชัด หรือมุมกล้องไม่ดี</div>
+      <div class="action-btns" style="margin-top:12px">
+        <button class="btn-open" onclick="setMode('manual');clearResult()">⌨️ พิมพ์เอง</button>
+        <button class="btn-pin" style="flex:1;padding:12px;background:rgba(255,160,0,0.08);border:1px solid rgba(255,160,0,0.2);border-radius:8px;color:#ffa000;font-size:13px;font-weight:700;cursor:pointer" onclick="showPinPad();clearResult()">🔢 PIN</button>
+      </div>
+    </div>`);
+}
+
+function showResult_exit(plate, d, b64){
+  const isAuto = d.autoOpen;
+  setResult(`
+    ${img(b64)}
+    <div class="status-card ${isAuto?'resident':'visitor'}">
+      <div class="s-icon">${isAuto?'✅':'⏳'}</div>
+      <div class="s-title">${isAuto?'ลูกบ้าน — เปิดออก':'แขก — รอลูกบ้านยืนยัน'}</div>
+      <div class="s-sub">บ้าน ${d.house||'—'} · ${d.status||'—'}</div>
+      <div class="plate-box"><div class="plate-txt">${plate}</div></div>
+      ${isAuto
+        ? `<div class="action-btns"><button class="btn-open" onclick="logExit('${plate}','${d.house||''}')">🔓 บันทึก &amp; เปิดออก</button><button class="btn-deny" onclick="clearResult()">✕</button></div>`
+        : `<div class="cd-wrap"><div class="cd-num" id="cd-num">60</div><div class="cd-lbl">วินาที — รอลูกบ้านยืนยัน</div></div>
+           <div class="action-btns"><button class="btn-open" onclick="logExit('${plate}','${d.house||''}')">🔓 Override เปิด</button><button class="btn-deny" onclick="denyExit()">✕ ปฏิเสธ</button></div>`
+      }`);
+  if (!isAuto) startCd(plate, d.house||'');
+}
+
+function showResult_exit_notfound(plate, b64){
+  setResult(`
+    ${img(b64)}
+    <div class="status-card unknown">
+      <div class="s-icon">❓</div>
+      <div class="s-title">ไม่พบรถในหมู่บ้าน</div>
+      <div class="s-sub">${plate} ไม่อยู่ใน Active_Vehicles</div>
+      <div class="plate-box"><div class="plate-txt">${plate}</div></div>
+      <div class="action-btns" style="margin-top:10px">
+        <button class="btn-open" onclick="logExit('${plate}','')">🔓 เปิด Manual</button>
+        <button class="btn-deny" onclick="clearResult()">✕</button>
+      </div>
+    </div>`);
+}
+
+function setResult(html){ const p = document.getElementById('result-panel'); p.className='result-panel show'; p.innerHTML=html; }
+
+// ============================================================
+// COUNTDOWN
+// ============================================================
+function startCd(plate, house){
+  let s = 60; if (countdownT) clearInterval(countdownT);
+  countdownT = setInterval(() => {
+    s--;
+    const el = document.getElementById('cd-num');
+    if (el) el.textContent = s;
+    if (s <= 0){ clearInterval(countdownT); showToast('⏰ หมดเวลา — แจ้ง รปภ.'); addLog(plate,'หมดเวลา','err'); clearResult(); }
+  }, 1000);
+}
+function denyExit(){ if (countdownT) clearInterval(countdownT); showToast('🚫 ปฏิเสธการออก'); clearResult(); }
+
+// ============================================================
+// ID SCAN
+// ============================================================
+async function startIdScan(plate){
+  showLoading('Gemini กำลังอ่านบัตรประชาชน...');
+  const b64 = captureFrame();
+  try {
+    const res = await postAPI('scanImage', {
+      image: b64,
+      prompt: 'อ่านข้อมูลจากบัตรประชาชนไทย ตอบ JSON เท่านั้น: {"id":"เลขบัตร","name":"ชื่อ-สกุล","dob":"วันเกิด","address":"ที่อยู่"} ถ้าอ่านไม่ได้ตอบ {"error":"unreadable"}'
+    });
+    hideLoading();
+    let d = {};
+    try { d = JSON.parse((res.result||'{}').replace(/```json|```/g,'').trim()); } catch(e){}
+    if (d.error){ showToast('อ่านบัตรไม่ได้ — ลองใหม่'); return; }
+    await postAPI('saveGuest', { id:d.id||'', name:d.name||'', dob:d.dob||'', address:d.address||'', plate, house:'', phone:'' });
+    setResult(`
+      <div class="status-card waiting">
+        <div class="s-icon">🪪</div>
+        <div class="s-title">อ่านบัตรแล้ว — รอลูกบ้านยืนยัน</div>
+        <div class="info-grid">
+          <div class="info-item"><div class="info-lbl">ชื่อ-สกุล</div><div class="info-val" style="font-size:12px">${d.name||'—'}</div></div>
+          <div class="info-item"><div class="info-lbl">เลขบัตร</div><div class="info-val" style="font-size:11px;font-family:monospace">${d.id||'—'}</div></div>
+        </div>
+        <div class="cd-wrap"><div class="cd-num" id="cd-num">60</div><div class="cd-lbl">วินาที — รอลูกบ้านยืนยัน</div></div>
+        <div class="action-btns">
+          <button class="btn-open" onclick="openGate('${plate}','ผู้มาติดต่อ','','','','')">🔓 Override เปิด</button>
+          <button class="btn-deny" onclick="clearResult()">✕</button>
+        </div>
+      </div>`);
+    startCd(plate, '');
+  } catch(e){ hideLoading(); showToast('❌ ' + e.message); }
+}
+
+// ============================================================
+// GATE ACTIONS
+// ============================================================
+async function openGate(plate, type, house, phone, brand, color){
+  if (countdownT) clearInterval(countdownT);
+  showLoading('กำลังบันทึก Log...');
+  try {
+    await postAPI('logEntry', { plate, type, house, phone, brand, color, approvedBy: type==='resident'?'AUTO':guardInfo.username, status:type, guestName:'' });
+    hideLoading();
+    addLog(plate, type==='resident'?'เข้า-AUTO':'เข้า-MANUAL', type==='resident'?'ok':'warn');
+    showToast('✅ บันทึกแล้ว — เปิดประตู!');
+    clearResult();
+    triggerESP32();
+  } catch(e){ hideLoading(); showToast('❌ ' + e.message); }
+}
+
+async function logExit(plate, house){
+  if (countdownT) clearInterval(countdownT);
+  showLoading('กำลังบันทึก Log ขาออก...');
+  try {
+    await postAPI('logExit', { plate, exitBy: guardInfo.username });
+    hideLoading();
+    addLog(plate, 'ออก', 'ok');
+    showToast('✅ บันทึกขาออก — เปิดประตู!');
+    clearResult();
+    triggerESP32();
+  } catch(e){ hideLoading(); showToast('❌ ' + e.message); }
+}
+
+function triggerESP32(){
+  // TODO: ใส่ IP ESP32 ที่นี่
+  // fetch('http://192.168.1.100/open').catch(()=>{});
+  console.log('🔓 [ESP32] Gate open signal');
+}
+
+// ============================================================
+// ACTIVE VEHICLES
+// ============================================================
+async function loadActiveVehicles(){
+  setResult('<div style="padding:16px;text-align:center;color:rgba(255,255,255,0.35)">กำลังโหลด...</div>');
+  try {
+    const res = await getAPI('getActive', {});
+    const v = res.vehicles || [];
+    if (!v.length){ setResult('<div style="padding:16px;text-align:center;color:rgba(255,255,255,0.25)">ไม่มีรถในหมู่บ้าน</div>'); return; }
+    setResult(`
+      <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:8px">รถในหมู่บ้าน (${v.length} คัน)</div>
+      ${v.map(x => `
+        <div class="status-card ${x.type==='ลูกบ้าน'?'resident':'visitor'}" style="margin-bottom:6px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:15px;font-weight:700;font-family:monospace">${x.plate}</div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.35)">${x.type} · บ้าน ${x.house||'—'} · ${x.entryTime}</div>
+            </div>
+            <button onclick="setGate('exit');checkPlate('${x.plate}',null)" style="padding:7px 12px;background:rgba(255,80,80,0.12);border:1px solid rgba(255,80,80,0.25);border-radius:7px;color:#ff5050;font-size:11px;font-weight:700;cursor:pointer">ออก</button>
+          </div>
+        </div>`).join('')}`);
+  } catch(e){ setResult(`<div style="padding:16px;text-align:center;color:#ff5050">${e.message}</div>`); }
+}
+
+// ============================================================
+// PIN PAD
+// ============================================================
+function showPinPad(){ pinBuffer=''; updatePinDisplay(); document.getElementById('pin-overlay').classList.add('show'); }
+function hidePinPad(){ document.getElementById('pin-overlay').classList.remove('show'); }
+function pinKey(k){ if (pinBuffer.length < 6){ pinBuffer+=k; updatePinDisplay(); } }
+function pinDel(){ pinBuffer=pinBuffer.slice(0,-1); updatePinDisplay(); }
+function updatePinDisplay(){ document.getElementById('pin-display').textContent = pinBuffer ? '●'.repeat(pinBuffer.length) : '_ _ _ _'; }
+async function pinSubmit(){
+  if (!pinBuffer) return;
+  hidePinPad();
+  showLoading('กำลังตรวจสอบ PIN...');
+  try {
+    const res = await postAPI('checkPin', { pin: pinBuffer });
+    hideLoading();
+    if (res.valid){ showToast(`✅ PIN ถูก — บ้าน ${res.house}`); await openGate(`PIN-${res.house}`,'PIN สำรอง',res.house,'','',''); }
+    else { showToast('❌ PIN ไม่ถูกต้อง'); }
+  } catch(e){ hideLoading(); showToast('❌ ' + e.message); }
+  pinBuffer='';
+}
+
+// ============================================================
+// LOG
+// ============================================================
+function addLog(plate, label, type){
+  const n = new Date();
+  const t = [n.getHours(),n.getMinutes()].map(v=>v.toString().padStart(2,'0')).join(':');
+  sessionLogs.unshift({plate,label,type,t});
+  if (sessionLogs.length > 15) sessionLogs.pop();
+  const list = document.getElementById('log-list');
+  list.innerHTML = sessionLogs.map(l => `
+    <div class="log-item">
+      <span class="log-plate">${l.plate}</span>
+      <span class="log-${l.type}">${l.label}</span>
+      <span style="color:rgba(255,255,255,0.25)">${l.t}</span>
+    </div>`).join('');
+}
+
+// ============================================================
+// API
+// ============================================================
+async function getAPI(action, params){
+  let url = API_URL + '?action=' + action;
+  Object.entries(params).forEach(([k,v]) => { url += `&${k}=${encodeURIComponent(v)}`; });
+  return (await fetch(url, {redirect:'follow'})).json();
+}
+async function postAPI(action, body){
+  return (await fetch(API_URL + '?action=' + action, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body), redirect:'follow'
+  })).json();
+}
+
+// ============================================================
+// UI HELPERS
+// ============================================================
+function showLoading(t){ document.getElementById('load-txt').textContent=t||'...'; document.getElementById('loading').classList.add('show'); }
+function hideLoading(){ document.getElementById('loading').classList.remove('show'); }
+function clearResult(){ if (countdownT) clearInterval(countdownT); document.getElementById('result-panel').className='result-panel'; document.getElementById('result-panel').innerHTML=''; }
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
+</script>
 </body>
 </html>
