@@ -812,18 +812,39 @@ function addLog(plate, label, type){
 }
 
 // ============================================================
-// API
+// API — ใช้ JSONP เพื่อแก้ปัญหา CORS
 // ============================================================
+function jsonpRequest(url){
+  return new Promise((resolve, reject) => {
+    const cbName = 'cb_' + Math.random().toString(36).slice(2);
+    const script = document.createElement('script');
+    const timer = setTimeout(() => {
+      delete window[cbName];
+      try { document.body.removeChild(script); } catch(e){}
+      reject(new Error('JSONP timeout'));
+    }, 15000);
+    window[cbName] = (data) => {
+      clearTimeout(timer);
+      delete window[cbName];
+      try { document.body.removeChild(script); } catch(e){}
+      resolve(data);
+    };
+    script.src = url + '&callback=' + cbName;
+    script.onerror = () => { clearTimeout(timer); reject(new Error('JSONP error')); };
+    document.body.appendChild(script);
+  });
+}
+
 async function getAPI(action, params){
   let url = API_URL + '?action=' + action;
   Object.entries(params).forEach(([k,v]) => { url += `&${k}=${encodeURIComponent(v)}`; });
-  return (await fetch(url, {redirect:'follow'})).json();
+  return jsonpRequest(url);
 }
+
 async function postAPI(action, body){
-  return (await fetch(API_URL + '?action=' + action, {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(body), redirect:'follow'
-  })).json();
+  let url = API_URL + '?action=' + action;
+  Object.entries(body).forEach(([k,v]) => { if(v !== undefined && v !== null) url += `&${k}=${encodeURIComponent(v)}`; });
+  return jsonpRequest(url);
 }
 
 // ============================================================
