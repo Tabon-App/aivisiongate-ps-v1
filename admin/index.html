@@ -2,195 +2,666 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#000000">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Vision Gate — Admin Dashboard</title>
-<link rel="manifest" href="manifest.json">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0b0f1c;color:#fff;font-family:'Segoe UI',Arial,sans-serif;display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{width:210px;background:rgba(255,255,255,0.02);border-right:1px solid rgba(255,255,255,0.06);padding:14px 0;flex-shrink:0;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:40}
+.sb-logo{display:flex;align-items:center;gap:10px;padding:0 14px 16px;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:10px}
+.sb-icon{width:32px;height:32px;background:linear-gradient(135deg,#00c878,#00a060);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.sb-name{font-size:13px;font-weight:800;line-height:1.2}
+.sb-sub{font-size:10px;color:rgba(255,255,255,0.3)}
+.sb-sec{font-size:9px;font-weight:700;color:rgba(255,255,255,0.2);text-transform:uppercase;letter-spacing:1px;padding:0 14px;margin:8px 0 4px}
+.sb-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-left:2px solid transparent;transition:all 0.15s}
+.sb-item:hover{background:rgba(255,255,255,0.03)}
+.sb-item.active{background:rgba(0,200,120,0.07);border-left-color:#00c878}
+.sb-item .si{font-size:15px;width:20px;text-align:center}
+.sb-item .sl{font-size:12px;font-weight:600;color:rgba(255,255,255,0.55)}
+.sb-item.active .sl{color:#00c878}
+.sb-bottom{margin-top:auto;padding:12px 14px;border-top:1px solid rgba(255,255,255,0.06)}
+.sb-user{display:flex;align-items:center;gap:8px}
+.sb-av{width:30px;height:30px;background:linear-gradient(135deg,#ffa000,#e65100);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.sb-un{font-size:12px;font-weight:700}
+.sb-ur{font-size:10px;color:rgba(255,255,255,0.3)}
+
+/* MAIN */
+.main{flex:1;margin-left:210px;display:flex;flex-direction:column;min-height:100vh}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.01);position:sticky;top:0;z-index:30}
+.page-title{font-size:17px;font-weight:800}
+.page-sub{font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px}
+.tb-right{display:flex;gap:8px;align-items:center}
+.clock-badge{font-size:12px;color:rgba(255,255,255,0.35);font-family:monospace;background:rgba(255,255,255,0.04);padding:6px 10px;border-radius:7px}
+.btn-add{padding:8px 14px;background:linear-gradient(135deg,#00c878,#00a060);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px}
+
+.content{flex:1;overflow-y:auto;padding:18px 20px}
+.page{display:none}
+.page.active{display:block}
+
+/* STAT GRID */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.stat-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:14px}
+.stat-val{font-size:28px;font-weight:900;color:#00c878;line-height:1}
+.stat-lbl{font-size:11px;color:rgba(255,255,255,0.35);margin-top:4px}
+.stat-change{font-size:10px;color:#00c878;margin-top:5px}
+
+/* OVERVIEW GRID */
+.ov-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.chart-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:14px}
+.chart-title{font-size:13px;font-weight:700;margin-bottom:12px}
+.bar-chart{display:flex;align-items:flex-end;gap:4px;height:90px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bar{width:100%;background:rgba(0,200,120,0.45);border-radius:3px 3px 0 0;min-height:4px}
+.bar-lbl{font-size:9px;color:rgba(255,255,255,0.25)}
+.act-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.act-item:last-child{border:none}
+.act-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.act-dot.ok{background:#00c878}
+.act-dot.warn{background:#ffa000}
+.act-plate{font-size:13px;font-weight:700;font-family:monospace}
+.act-meta{font-size:10px;color:rgba(255,255,255,0.35);margin-top:1px}
+.act-time{font-size:10px;color:rgba(255,255,255,0.25);margin-left:auto}
+
+/* TABLE */
+.table-section{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;overflow:hidden;margin-bottom:14px}
+.table-header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.table-title{font-size:13px;font-weight:700}
+.search-input{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:7px 12px;font-size:12px;color:#fff;outline:none;width:200px}
+.search-input::placeholder{color:rgba(255,255,255,0.2)}
+.search-input:focus{border-color:rgba(0,200,120,0.35)}
+table{width:100%;border-collapse:collapse}
+th{padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid rgba(255,255,255,0.06)}
+td{padding:11px 14px;font-size:12px;border-bottom:1px solid rgba(255,255,255,0.04)}
+tr:last-child td{border:none}
+tr:hover td{background:rgba(255,255,255,0.015)}
+.td-plate{font-family:monospace;font-weight:700;font-size:13px}
+.td-house{color:rgba(255,255,255,0.7);font-weight:600}
+.td-dim{color:rgba(255,255,255,0.4)}
+.badge{display:inline-flex;align-items:center;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px}
+.badge.res{background:rgba(0,200,120,0.12);color:#00c878}
+.badge.vis{background:rgba(255,160,0,0.12);color:#ffa000}
+.badge.active{background:rgba(100,100,255,0.12);color:#aaaaff}
+.td-acts{display:flex;gap:5px}
+.btn-sm{padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid;transition:opacity 0.15s}
+.btn-sm:hover{opacity:0.8}
+.btn-sm.edit{background:rgba(255,160,0,0.08);border-color:rgba(255,160,0,0.2);color:#ffa000}
+.btn-sm.del{background:rgba(255,80,80,0.08);border-color:rgba(255,80,80,0.2);color:#ff5050}
+.btn-sm.view{background:rgba(0,200,120,0.08);border-color:rgba(0,200,120,0.2);color:#00c878}
+.btn-sm.add-v{background:rgba(100,100,255,0.08);border-color:rgba(100,100,255,0.2);color:#aaaaff}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;align-items:center;justify-content:center}
+.modal-bg.show{display:flex}
+.modal{background:#141828;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:22px;width:460px;max-width:90vw;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:15px;font-weight:800;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between}
+.modal-close{font-size:18px;cursor:pointer;color:rgba(255,255,255,0.4);padding:2px 6px}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:5px}
+.field label .req{color:#ff5050;margin-left:2px}
+.field label .opt{color:rgba(255,255,255,0.2);font-weight:400;margin-left:4px;font-size:9px}
+.field input,.field select{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:9px;padding:10px 13px;font-size:14px;color:#fff;outline:none;font-family:inherit}
+.field input:focus,.field select:focus{border-color:rgba(0,200,120,0.4)}
+.field input::placeholder{color:rgba(255,255,255,0.2)}
+.field select option{background:#141828}
+.field-row{display:flex;gap:10px}
+.field-row .field{flex:1}
+.province-wrap{position:relative}
+.province-suggestions{display:none;position:absolute;top:100%;left:0;right:0;background:#1e2840;border:1px solid rgba(0,200,120,0.25);border-radius:9px;margin-top:3px;z-index:10;max-height:150px;overflow-y:auto}
+.p-item{padding:8px 13px;font-size:13px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.04)}
+.p-item:hover{background:rgba(0,200,120,0.08)}
+.p-match{color:#00c878;font-weight:700}
+.modal-btns{display:flex;gap:8px;margin-top:14px}
+.btn-save{flex:1;padding:11px;background:linear-gradient(135deg,#00c878,#00a060);border:none;border-radius:9px;color:#fff;font-size:14px;font-weight:700;cursor:pointer}
+.btn-cancel{flex:1;padding:11px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:9px;color:rgba(255,255,255,0.4);font-size:13px;cursor:pointer}
+.pin-input{letter-spacing:6px;font-family:monospace;font-size:18px}
+
+/* SETTINGS */
+.settings-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:16px;margin-bottom:12px;max-width:600px}
+.settings-title{font-size:13px;font-weight:700;margin-bottom:14px;color:rgba(255,255,255,0.7)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.toggle-row:last-child{border:none}
+.toggle-lbl{font-size:13px;color:rgba(255,255,255,0.7)}
+.toggle-sub{font-size:10px;color:rgba(255,255,255,0.3);margin-top:2px}
+.toggle-sw{width:42px;height:24px;border-radius:12px;position:relative;cursor:pointer;flex-shrink:0;transition:background 0.2s}
+.toggle-sw.on{background:#00c878}
+.toggle-sw.off{background:rgba(255,255,255,0.12)}
+.toggle-sw::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:3px;transition:left 0.2s}
+.toggle-sw.on::after{left:21px}
+.toggle-sw.off::after{left:3px}
+
+/* LOADING / TOAST */
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+.loading-overlay.show{display:flex}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:42px;height:42px;border:4px solid rgba(255,255,255,0.08);border-top-color:#00c878;border-radius:50%;animation:spin 0.8s linear infinite}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a2035;border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 18px;font-size:13px;z-index:300;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;max-width:90vw}
+.toast.show{opacity:1}
+.empty{text-align:center;padding:28px;color:rgba(255,255,255,0.2)}
+.empty-icon{font-size:32px;margin-bottom:8px}
+.empty-txt{font-size:12px}
+</style>
 </head>
 <body>
-<div class="app-shell">
 
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="brand">
-      <span class="logo-mark"></span>
-      <span class="wordmark">AI VISION GATE</span>
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div>
+    <div class="sb-logo">
+      <div class="sb-icon">⚙️</div>
+      <div><div class="sb-name">AI Vision Gate</div><div class="sb-sub">Admin</div></div>
     </div>
-    <div class="village-name" id="sidebar-village"><!-- rendered by app.js --></div>
-
-    <nav class="nav-list" id="nav-list">
-      <button class="nav-item active" data-page="overview">
-        <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-        ภาพรวม
-      </button>
-      <button class="nav-item" data-page="residents">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>
-        ลูกบ้าน
-      </button>
-      <button class="nav-item" data-page="vehicles">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M4 16l1.5-5h13L20 16"/><path d="M4 16h16v3H4z"/><circle cx="7.5" cy="19" r="1.5"/><circle cx="16.5" cy="19" r="1.5"/></svg>
-        ทะเบียนรถ
-      </button>
-      <button class="nav-item" data-page="reports">
-        <svg viewBox="0 0 24 24" fill="none"><line x1="4" y1="21" x2="4" y2="10"/><line x1="10" y1="21" x2="10" y2="3"/><line x1="16" y1="21" x2="16" y2="13"/><line x1="21" y1="21" x2="3" y2="21"/></svg>
-        รายงาน
-      </button>
-      <button class="nav-item" data-page="settings">
-        <svg viewBox="0 0 24 24" fill="none"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="2"/></svg>
-        ตั้งค่า
-      </button>
-    </nav>
-
-    <div class="data-source" id="data-source"><span class="dot faint"></span><span id="data-source-text">กำลังเชื่อมต่อ...</span></div>
-    <div class="clock" id="clock">--:--:--</div>
-  </aside>
-
-  <!-- Main content -->
-  <main class="main">
-
-    <!-- Overview -->
-    <section class="page active" id="page-overview">
-      <div class="page-header">
-        <div class="page-title">ภาพรวมระบบ</div>
-        <div class="page-sub">สรุปสถานะการเข้า-ออกของหมู่บ้านวันนี้</div>
-      </div>
-      <div class="stat-grid" id="stat-grid"><!-- rendered by app.js --></div>
-      <div class="panel">
-        <div class="label-row"><span class="label">เข้า-ออกรายชั่วโมง (วันนี้)</span></div>
-        <div class="bar-chart" id="hourly-chart"><!-- rendered by app.js --></div>
-      </div>
-      <div class="panel">
-        <div class="label-row"><span class="label">Recent Activity</span></div>
-        <div id="overview-activity"><!-- rendered by app.js --></div>
-      </div>
-    </section>
-
-    <!-- Residents -->
-    <section class="page" id="page-residents">
-      <div class="page-header">
-        <div class="page-title">จัดการลูกบ้าน</div>
-        <div class="page-sub">ข้อมูลบ้านเลขที่ เจ้าของบ้าน และ PIN สำหรับเข้า-ออก</div>
-      </div>
-      <div class="label-row">
-        <span class="label">รายชื่อลูกบ้าน (<span id="residents-count">11</span> บ้าน)</span>
-        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-          <input type="text" class="table-search" id="residents-search" placeholder="ค้นหาบ้านเลขที่ / ชื่อ...">
-          <button class="btn-sm" id="toggle-pin">แสดง PIN</button>
-        </div>
-      </div>
-      <div class="table-wrap">
-        <table class="data-table" id="residents-table">
-          <thead>
-            <tr>
-              <th>บ้านเลขที่</th>
-              <th>เจ้าของบ้าน</th>
-              <th>PIN</th>
-              <th>เบอร์โทร</th>
-              <th>Username</th>
-              <th>จำนวนรถ</th>
-            </tr>
-          </thead>
-          <tbody id="residents-tbody"><!-- rendered by app.js --></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- Vehicles -->
-    <section class="page" id="page-vehicles">
-      <div class="page-header">
-        <div class="page-title">จัดการทะเบียนรถ</div>
-        <div class="page-sub">ฐานข้อมูลรถที่ลงทะเบียนทั้งหมดในระบบ</div>
-      </div>
-      <div class="label-row">
-        <span class="label">รถที่ลงทะเบียน (<span id="vehicles-count">16</span> คัน)</span>
-        <input type="text" class="table-search" id="vehicles-search" placeholder="ค้นหาทะเบียน / บ้านเลขที่ / เจ้าของ...">
-      </div>
-      <div class="table-wrap">
-        <table class="data-table" id="vehicles-table">
-          <thead>
-            <tr>
-              <th>ทะเบียนรถ</th>
-              <th>เจ้าของ</th>
-              <th>บ้านเลขที่</th>
-              <th>โทรศัพท์</th>
-              <th>รายละเอียดรถ</th>
-              <th>ลงทะเบียนโดย</th>
-            </tr>
-          </thead>
-          <tbody id="vehicles-tbody"><!-- rendered by app.js --></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- Reports -->
-    <section class="page" id="page-reports">
-      <div class="page-header">
-        <div class="page-title">รายงานการเข้า-ออก</div>
-        <div class="page-sub">สรุปสถิติย้อนหลัง 7 วัน แยกตามวันและจุดเข้า-ออก</div>
-      </div>
-      <div class="panel">
-        <div class="label-row"><span class="label">เข้า-ออกรายสัปดาห์</span></div>
-        <div class="bar-chart" id="weekly-chart"><!-- rendered by app.js --></div>
-        <div class="chart-legend">
-          <div class="legend-item"><span class="swatch entries"></span>เข้า (Entries)</div>
-          <div class="legend-item"><span class="swatch exits"></span>ออก (Exits)</div>
-        </div>
-      </div>
-      <div class="panel">
-        <div class="label-row"><span class="label">สรุปตามจุดเข้า-ออก (7 วันล่าสุด)</span></div>
-        <div class="table-wrap">
-          <table class="data-table" id="gate-summary-table">
-            <thead>
-              <tr>
-                <th>จุดเข้า-ออก</th>
-                <th>เข้า (Entries)</th>
-                <th>ออก (Exits)</th>
-                <th>รวม</th>
-              </tr>
-            </thead>
-            <tbody id="gate-summary-tbody"><!-- rendered by app.js --></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- Settings -->
-    <section class="page" id="page-settings">
-      <div class="page-header">
-        <div class="page-title">ตั้งค่าระบบ</div>
-        <div class="page-sub">ข้อมูลหมู่บ้าน จุดเข้า-ออก และนโยบายการทำงานของระบบ</div>
-      </div>
-      <div class="panel">
-        <div class="label-row"><span class="label">ข้อมูลหมู่บ้าน</span></div>
-        <div class="settings-row">
-          <span class="s-label">ชื่อหมู่บ้าน</span>
-          <span class="s-value" id="settings-village-name"></span>
-        </div>
-        <div class="settings-row">
-          <span class="s-label">จำนวนบ้านทั้งหมด</span>
-          <span class="s-value" id="settings-total-houses"></span>
-        </div>
-        <div class="settings-row">
-          <span class="s-label">จำนวนรถที่ลงทะเบียน</span>
-          <span class="s-value" id="settings-total-vehicles"></span>
-        </div>
-      </div>
-      <div class="panel">
-        <div class="label-row"><span class="label">จุดเข้า-ออก (Gates)</span></div>
-        <div class="gate-list" id="settings-gates"><!-- rendered by app.js --></div>
-      </div>
-      <div class="panel">
-        <div class="label-row"><span class="label">นโยบายการทำงานของระบบ</span></div>
-        <div id="settings-toggles"><!-- rendered by app.js --></div>
-      </div>
-    </section>
-
-  </main>
-
+    <div class="sb-sec">ภาพรวม</div>
+    <div class="sb-item active" onclick="showPage('overview',this,'ภาพรวมระบบ','หมู่บ้านพฤกษา แอร์พอร์ต-มะลิวัลย์')">
+      <span class="si">📊</span><span class="sl">ภาพรวม</span>
+    </div>
+    <div class="sb-sec">จัดการ</div>
+    <div class="sb-item" onclick="showPage('residents',this,'จัดการลูกบ้าน','เพิ่ม / แก้ไข / ลบ ข้อมูลลูกบ้านและรหัสผ่าน')">
+      <span class="si">🏠</span><span class="sl">จัดการลูกบ้าน</span>
+    </div>
+    <div class="sb-item" onclick="showPage('vehicles',this,'ทะเบียนรถ','รถที่ลงทะเบียนในระบบทั้งหมด')">
+      <span class="si">🚗</span><span class="sl">ทะเบียนรถ</span>
+    </div>
+    <div class="sb-item" onclick="showPage('log',this,'บันทึกเข้า-ออก','ประวัติการเข้า-ออกพร้อมรูปถ่าย')">
+      <span class="si">📋</span><span class="sl">บันทึกเข้า-ออก</span>
+    </div>
+    <div class="sb-item" onclick="showPage('guests',this,'บันทึกแขก','ข้อมูลแขกที่เข้าหมู่บ้าน')">
+      <span class="si">👥</span><span class="sl">บันทึกแขก</span>
+    </div>
+    <div class="sb-item" onclick="showPage('reports',this,'รายงาน','สถิติรายสัปดาห์')">
+      <span class="si">📈</span><span class="sl">รายงาน</span>
+    </div>
+    <div class="sb-sec">ระบบ</div>
+    <div class="sb-item" onclick="showPage('settings',this,'ตั้งค่าระบบ','ข้อมูลหมู่บ้านและนโยบายการทำงาน')">
+      <span class="si">⚙️</span><span class="sl">ตั้งค่า</span>
+    </div>
+  </div>
+  <div class="sb-bottom">
+    <div class="sb-user">
+      <div class="sb-av">👤</div>
+      <div><div class="sb-un" id="admin-name">admin</div><div class="sb-ur">Administrator</div></div>
+    </div>
+  </div>
 </div>
-<script src="app.js"></script>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="page-title">ภาพรวมระบบ</div>
+      <div class="page-sub" id="page-sub">หมู่บ้านพฤกษา แอร์พอร์ต-มะลิวัลย์</div>
+    </div>
+    <div class="tb-right">
+      <div class="clock-badge" id="clock">🕐 --:--:--</div>
+      <button class="btn-add" id="btn-add" onclick="handleAdd()">+ เพิ่มใหม่</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- OVERVIEW -->
+    <div class="page active" id="page-overview">
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-val" id="ov-houses">—</div><div class="stat-lbl">บ้านหลังคาเรือน</div></div>
+        <div class="stat-card"><div class="stat-val" id="ov-vehicles">—</div><div class="stat-lbl">รถที่ลงทะเบียน</div></div>
+        <div class="stat-card"><div class="stat-val" id="ov-today">—</div><div class="stat-lbl">เข้า-ออกวันนี้</div></div>
+        <div class="stat-card"><div class="stat-val" id="ov-visitors">—</div><div class="stat-lbl">ผู้มาติดต่อวันนี้</div></div>
+      </div>
+      <div class="ov-grid">
+        <div class="chart-card">
+          <div class="chart-title">เข้า-ออกรายชั่วโมง (วันนี้)</div>
+          <div class="bar-chart" id="hourly-chart"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">กิจกรรมล่าสุด</div>
+          <div id="recent-activity"><div class="empty"><div class="empty-txt">กำลังโหลด...</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESIDENTS -->
+    <div class="page" id="page-residents">
+      <div class="table-section">
+        <div class="table-header">
+          <div class="table-title">รายชื่อลูกบ้าน (<span id="res-count">—</span> หลัง)</div>
+          <input class="search-input" placeholder="🔍 ค้นหาชื่อ / บ้านเลขที่..." oninput="filterTable(this.value,'res-tbody')">
+        </div>
+        <table>
+          <thead><tr><th>บ้านเลขที่</th><th>ชื่อเจ้าของ</th><th>Username</th><th>PIN</th><th>เบอร์โทร</th><th>รถ</th><th>จัดการ</th></tr></thead>
+          <tbody id="res-tbody"><tr><td colspan="7" style="text-align:center;padding:20px;color:rgba(255,255,255,0.25)">กำลังโหลด...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VEHICLES -->
+    <div class="page" id="page-vehicles">
+      <div class="table-section">
+        <div class="table-header">
+          <div class="table-title">ทะเบียนรถ (<span id="veh-count">—</span> คัน)</div>
+          <input class="search-input" placeholder="🔍 ค้นหาทะเบียน / บ้าน..." oninput="filterTable(this.value,'veh-tbody')">
+        </div>
+        <table>
+          <thead><tr><th>ทะเบียนรถ</th><th>เจ้าของ</th><th>บ้าน</th><th>ยี่ห้อ/สี</th><th>ประเภท</th><th>วิธีลงทะเบียน</th><th>วันที่</th><th>จัดการ</th></tr></thead>
+          <tbody id="veh-tbody"><tr><td colspan="8" style="text-align:center;padding:20px;color:rgba(255,255,255,0.25)">กำลังโหลด...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- LOG -->
+    <div class="page" id="page-log">
+      <div class="table-section">
+        <div class="table-header">
+          <div class="table-title">บันทึกเข้า-ออก</div>
+          <input class="search-input" placeholder="🔍 ค้นหาทะเบียน..." oninput="filterTable(this.value,'log-tbody')">
+        </div>
+        <table>
+          <thead><tr><th>เวลาเข้า</th><th>ทะเบียน</th><th>ประเภท</th><th>บ้าน</th><th>อนุมัติโดย</th><th>รูปเข้า</th><th>เวลาออก</th><th>รูปออก</th></tr></thead>
+          <tbody id="log-tbody"><tr><td colspan="8" style="text-align:center;padding:20px;color:rgba(255,255,255,0.25)">กำลังโหลด...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- GUESTS -->
+    <div class="page" id="page-guests">
+      <div class="table-section">
+        <div class="table-header">
+          <div class="table-title">บันทึกแขก</div>
+          <input class="search-input" placeholder="🔍 ค้นหาชื่อ / ทะเบียน..." oninput="filterTable(this.value,'guest-tbody')">
+        </div>
+        <table>
+          <thead><tr><th>วันที่-เวลา</th><th>ชื่อ-สกุล</th><th>เลขบัตร</th><th>ทะเบียน</th><th>บ้านที่ไป</th><th>เบอร์โทร</th></tr></thead>
+          <tbody id="guest-tbody"><tr><td colspan="6" style="text-align:center;padding:20px;color:rgba(255,255,255,0.25)">กำลังโหลด...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="page" id="page-reports">
+      <div class="chart-card" style="margin-bottom:14px">
+        <div class="chart-title">เข้า-ออกรายสัปดาห์</div>
+        <div class="bar-chart" id="weekly-chart" style="height:120px"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="settings-card">
+        <div class="settings-title">ข้อมูลหมู่บ้าน</div>
+        <div class="field"><label>ชื่อหมู่บ้าน</label><input type="text" id="set-village" value="หมู่บ้านพฤกษา แอร์พอร์ต-มะลิวัลย์"></div>
+        <div class="field-row">
+          <div class="field"><label>จำนวนบ้าน</label><input type="text" id="set-houses" disabled style="opacity:0.5"></div>
+          <div class="field"><label>จำนวนรถ</label><input type="text" id="set-vehicles" disabled style="opacity:0.5"></div>
+        </div>
+      </div>
+      <div class="settings-card">
+        <div class="settings-title">นโยบายการทำงาน</div>
+        <div id="toggles-list"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL: เพิ่ม/แก้ไข ลูกบ้าน -->
+<div class="modal-bg" id="modal-resident" onclick="if(event.target===this)closeModal('resident')">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="modal-res-title">🏠 เพิ่มลูกบ้านใหม่</span>
+      <span class="modal-close" onclick="closeModal('resident')">✕</span>
+    </div>
+    <input type="hidden" id="res-edit-house">
+    <div class="field-row">
+      <div class="field"><label>บ้านเลขที่ <span class="req">*</span></label><input type="text" id="res-house" placeholder="เช่น 53/5"></div>
+      <div class="field"><label>PIN <span class="req">*</span></label><input type="text" id="res-pin" placeholder="4-6 หลัก" class="pin-input" maxlength="6"></div>
+    </div>
+    <div class="field"><label>ชื่อเจ้าของบ้าน <span class="req">*</span></label><input type="text" id="res-name" placeholder="เช่น นาย สมชาย ใจดี"></div>
+    <div class="field-row">
+      <div class="field"><label>Username <span class="req">*</span></label><input type="text" id="res-username" placeholder="เช่น resident12"></div>
+      <div class="field"><label>Password <span class="req">*</span></label><input type="password" id="res-password" placeholder="ตั้งรหัสผ่าน"></div>
+    </div>
+    <div class="field"><label>เบอร์โทร <span class="opt">(ไม่บังคับ)</span></label><input type="text" id="res-phone" placeholder="08XXXXXXXX"></div>
+    <div class="modal-btns">
+      <button class="btn-save" onclick="saveResident()">✅ บันทึก</button>
+      <button class="btn-cancel" onclick="closeModal('resident')">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: เพิ่ม/แก้ไข รถ -->
+<div class="modal-bg" id="modal-vehicle" onclick="if(event.target===this)closeModal('vehicle')">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="modal-veh-title">🚗 เพิ่มรถใหม่</span>
+      <span class="modal-close" onclick="closeModal('vehicle')">✕</span>
+    </div>
+    <div class="field-row">
+      <div class="field" style="flex:1.5"><label>ทะเบียนรถ <span class="req">*</span></label><input type="text" id="veh-plate" placeholder="เช่น กข 1234" style="font-family:monospace;letter-spacing:1px"></div>
+      <div class="field"><label>ประเภท <span class="req">*</span></label>
+        <select id="veh-type"><option>รถยนต์</option><option>รถกระบะ</option><option>มอเตอร์ไซค์</option><option>รถตู้</option></select>
+      </div>
+    </div>
+    <div class="field">
+      <label>จังหวัด <span class="req">*</span></label>
+      <div class="province-wrap">
+        <input type="text" id="veh-province" placeholder="พิมพ์เพื่อค้นหา..." autocomplete="off" oninput="filterProv(this.value,'veh-prov-list')">
+        <div class="province-suggestions" id="veh-prov-list"></div>
+      </div>
+    </div>
+    <div class="field"><label>บ้านเลขที่ <span class="req">*</span></label><select id="veh-house"><option value="">เลือกบ้านเลขที่</option></select></div>
+    <div class="field-row">
+      <div class="field"><label>ยี่ห้อรถ <span class="opt">(ไม่บังคับ)</span></label><input type="text" id="veh-brand" placeholder="เช่น Toyota"></div>
+      <div class="field"><label>สีรถ <span class="opt">(ไม่บังคับ)</span></label><input type="text" id="veh-color" placeholder="เช่น ขาว"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-save" onclick="saveVehicle()">✅ บันทึก</button>
+      <button class="btn-cancel" onclick="closeModal('vehicle')">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<div class="loading-overlay" id="loading"><div class="spinner"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxiPp-xyVNOw6Dm6L9Il3I2b9ynhu02L_VTBmTAXSMh7WHijR-QttRXK6NzBaZUb0k3Nw/exec';
+const PROVINCES = ['กระบี่','กาญจนบุรี','กาฬสินธุ์','กำแพงเพชร','ขอนแก่น','จันทบุรี','ฉะเชิงเทรา','ชลบุรี','ชัยนาท','ชัยภูมิ','ชุมพร','เชียงราย','เชียงใหม่','ตรัง','ตราด','ตาก','นครนายก','นครปฐม','นครพนม','นครราชสีมา','นครศรีธรรมราช','นครสวรรค์','นนทบุรี','นราธิวาส','น่าน','บึงกาฬ','บุรีรัมย์','ปทุมธานี','ประจวบคีรีขันธ์','ปราจีนบุรี','ปัตตานี','พระนครศรีอยุธยา','พะเยา','พังงา','พัทลุง','พิจิตร','พิษณุโลก','เพชรบุรี','เพชรบูรณ์','แพร่','ภูเก็ต','มหาสารคาม','มุกดาหาร','แม่ฮ่องสอน','ยโสธร','ยะลา','ร้อยเอ็ด','ระนอง','ระยอง','ราชบุรี','ลพบุรี','ลำปาง','ลำพูน','เลย','ศรีสะเกษ','สกลนคร','สงขลา','สตูล','สมุทรปราการ','สมุทรสงคราม','สมุทรสาคร','สระแก้ว','สระบุรี','สิงห์บุรี','สุโขทัย','สุพรรณบุรี','สุราษฎร์ธานี','สุรินทร์','หนองคาย','หนองบัวลำภู','อ่างทอง','อำนาจเจริญ','อุดรธานี','อุตรดิตถ์','อุทัยธานี','อุบลราชธานี','กรุงเทพมหานคร'];
+
+let appData = null;
+let currentPage = 'overview';
+
+// INIT
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    const s = JSON.parse(sessionStorage.getItem('aivsg_user') || '{}');
+    if (!s.username || s.role !== 'admin'){ window.location.href = '../'; return; }
+    document.getElementById('admin-name').textContent = s.username;
+  } catch(e){ window.location.href = '../'; return; }
+  updateClock();
+  setInterval(updateClock, 1000);
+  loadAll();
+});
+
+function updateClock(){
+  const n = new Date();
+  document.getElementById('clock').textContent = '🕐 ' + [n.getHours(),n.getMinutes(),n.getSeconds()].map(v=>v.toString().padStart(2,'0')).join(':');
+}
+
+async function loadAll(){
+  showLoading();
+  try {
+    appData = await jsonp('getAll', {});
+    hideLoading();
+    renderOverview();
+    renderResidents();
+    renderVehicles();
+    renderSettings();
+    populateHouseDropdown();
+  } catch(e){ hideLoading(); showToast('❌ โหลดข้อมูลไม่ได้: ' + e.message); }
+}
+
+// RENDER OVERVIEW
+function renderOverview(){
+  const ov = appData.overview || {};
+  const s  = ov.stats || {};
+  document.getElementById('ov-houses').textContent   = s.houses || 0;
+  document.getElementById('ov-vehicles').textContent  = s.vehicles || 0;
+  document.getElementById('ov-today').textContent     = s.todayEntries || 0;
+  document.getElementById('ov-visitors').textContent  = s.todayVisitors || 0;
+
+  // Hourly chart
+  const hourly = ov.hourly || [];
+  const maxH = Math.max(...hourly.map(h=>h.count), 1);
+  document.getElementById('hourly-chart').innerHTML = hourly.map(h=>`
+    <div class="bar-col">
+      <div class="bar" style="height:${Math.max(h.count/maxH*100,4)}%"></div>
+      <div class="bar-lbl">${h.hour.split(':')[0]}</div>
+    </div>`).join('');
+
+  // Recent activity
+  const acts = ov.recentActivity || [];
+  document.getElementById('recent-activity').innerHTML = acts.length ? acts.map(a=>`
+    <div class="act-item">
+      <div class="act-dot ${a.status==='ok'?'ok':'warn'}"></div>
+      <div style="flex:1">
+        <div class="act-plate">${a.plate}</div>
+        <div class="act-meta">${a.house} · ${a.meta}</div>
+      </div>
+      <div class="act-time">${a.time}</div>
+    </div>`).join('') : '<div class="empty"><div class="empty-txt">ไม่มีกิจกรรม</div></div>';
+}
+
+// RENDER RESIDENTS
+function renderResidents(){
+  const residents = appData.residents || [];
+  document.getElementById('res-count').textContent = residents.length;
+  document.getElementById('res-tbody').innerHTML = residents.map(r=>`
+    <tr data-search="${(r.house+r.owner+r.username).toLowerCase()}">
+      <td><span class="td-house">${r.house}</span></td>
+      <td>${r.owner}</td>
+      <td class="td-dim" style="font-family:monospace">${r.username}</td>
+      <td class="td-dim" style="font-family:monospace">••••</td>
+      <td class="td-dim">${r.phone||'—'}</td>
+      <td><span class="badge res">${r.vehicleCount} คัน</span></td>
+      <td><div class="td-acts">
+        <button class="btn-sm edit" onclick="editResident('${r.house}','${r.owner}','${r.username}','${r.phone||''}')">✏️ แก้ไข</button>
+        <button class="btn-sm add-v" onclick="openAddVehicle('${r.house}')">🚗 เพิ่มรถ</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+// RENDER VEHICLES
+function renderVehicles(){
+  const vehicles = appData.vehicles || [];
+  document.getElementById('veh-count').textContent = vehicles.length;
+  document.getElementById('veh-tbody').innerHTML = vehicles.map(v=>`
+    <tr data-search="${(v.plate+v.house+v.owner).toLowerCase()}">
+      <td class="td-plate">${v.plate}</td>
+      <td>${v.owner}</td>
+      <td><span class="td-house">${v.house}</span></td>
+      <td class="td-dim">${v.brand||'—'} ${v.color?'· '+v.color:''}</td>
+      <td class="td-dim">${v.type||'—'}</td>
+      <td class="td-dim" style="font-size:11px">${v.method||'—'} (${v.regBy||'—'})</td>
+      <td class="td-dim" style="font-size:11px">${v.regDate||'—'}</td>
+      <td><div class="td-acts">
+        <button class="btn-sm del" onclick="deleteVehicle('${v.plate}')">🗑️ ลบ</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+// RENDER SETTINGS
+function renderSettings(){
+  const v = appData.village || {};
+  const s = appData.settings || {};
+  document.getElementById('set-houses').value   = (v.totalHouses||0) + ' หลัง';
+  document.getElementById('set-vehicles').value = (v.totalVehicles||0) + ' คัน';
+  const toggles = s.toggles || [];
+  document.getElementById('toggles-list').innerHTML = toggles.map(t=>`
+    <div class="toggle-row">
+      <div><div class="toggle-lbl">${t.label}</div></div>
+      <div class="toggle-sw ${t.value?'on':'off'}" onclick="this.classList.toggle('on');this.classList.toggle('off')"></div>
+    </div>`).join('');
+  // Weekly chart
+  const weekly = (appData.reports||{}).weekly || [];
+  const maxW = Math.max(...weekly.map(w=>w.entries+w.exits), 1);
+  document.getElementById('weekly-chart') && (document.getElementById('weekly-chart').innerHTML = weekly.map(w=>`
+    <div class="bar-col">
+      <div class="bar" style="height:${Math.max((w.entries+w.exits)/maxW*100,4)}%"></div>
+      <div class="bar-lbl">${w.day.slice(0,1)}</div>
+    </div>`).join(''));
+}
+
+// PAGE NAVIGATION
+function showPage(name, el, title, sub){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if (el) el.classList.add('active');
+  document.getElementById('page-title').textContent = title || name;
+  document.getElementById('page-sub').textContent   = sub || '';
+  currentPage = name;
+  // Load on demand
+  if (name === 'log') loadLog();
+  if (name === 'guests') loadGuests();
+  if (name === 'reports' && appData) {
+    const weekly = (appData.reports||{}).weekly || [];
+    const maxW = Math.max(...weekly.map(w=>w.entries+w.exits), 1);
+    const el2 = document.getElementById('weekly-chart');
+    if (el2) el2.innerHTML = weekly.map(w=>`
+      <div class="bar-col">
+        <div class="bar" style="height:${Math.max((w.entries+w.exits)/maxW*100,4)}%"></div>
+        <div class="bar-lbl">${w.day.slice(0,1)}</div>
+      </div>`).join('');
+  }
+}
+
+function handleAdd(){
+  if (currentPage === 'residents') openAddResident();
+  else if (currentPage === 'vehicles') openAddVehicle('');
+  else openAddResident();
+}
+
+// LOAD LOG
+async function loadLog(){
+  document.getElementById('log-tbody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:16px;color:rgba(255,255,255,0.25)">กำลังโหลด...</td></tr>';
+  try {
+    // ดึงจาก sheet log โดยตรง (ใช้ getHistory แทน)
+    // TODO: เพิ่ม action getLog ใน Apps Script
+    document.getElementById('log-tbody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:16px;color:rgba(255,255,255,0.25)">— ดูใน Google Sheet โดยตรง —</td></tr>';
+  } catch(e){ showToast('❌ ' + e.message); }
+}
+
+// LOAD GUESTS
+async function loadGuests(){
+  document.getElementById('guest-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;color:rgba(255,255,255,0.25)">กำลังโหลด...</td></tr>';
+  try {
+    document.getElementById('guest-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;color:rgba(255,255,255,0.25)">— ดูใน Google Sheet โดยตรง —</td></tr>';
+  } catch(e){}
+}
+
+// RESIDENT MODAL
+function openAddResident(){
+  document.getElementById('modal-res-title').textContent = '🏠 เพิ่มลูกบ้านใหม่';
+  ['res-edit-house','res-house','res-pin','res-name','res-username','res-password','res-phone'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('modal-resident').classList.add('show');
+}
+
+function editResident(house, name, username, phone){
+  document.getElementById('modal-res-title').textContent = '✏️ แก้ไขลูกบ้าน ' + house;
+  document.getElementById('res-edit-house').value = house;
+  document.getElementById('res-house').value    = house;
+  document.getElementById('res-name').value     = name;
+  document.getElementById('res-username').value = username;
+  document.getElementById('res-phone').value    = phone;
+  document.getElementById('res-password').value = '';
+  document.getElementById('modal-resident').classList.add('show');
+}
+
+async function saveResident(){
+  const house    = document.getElementById('res-house').value.trim();
+  const pin      = document.getElementById('res-pin').value.trim();
+  const name     = document.getElementById('res-name').value.trim();
+  const username = document.getElementById('res-username').value.trim();
+  const password = document.getElementById('res-password').value;
+  const phone    = document.getElementById('res-phone').value.trim();
+  if (!house || !name || !username){ showToast('กรุณากรอกข้อมูลให้ครบ'); return; }
+  // TODO: เพิ่ม action addResident / updateResident ใน Apps Script
+  showToast('⚠️ ฟีเจอร์นี้ต้องเพิ่ม action ใน Apps Script — จะทำในรอบถัดไป');
+  closeModal('resident');
+}
+
+// VEHICLE MODAL
+function openAddVehicle(house){
+  document.getElementById('modal-veh-title').textContent = '🚗 เพิ่มรถใหม่';
+  ['veh-plate','veh-province','veh-brand','veh-color'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('veh-type').value  = 'รถยนต์';
+  document.getElementById('veh-house').value = house || '';
+  document.getElementById('modal-vehicle').classList.add('show');
+}
+
+async function saveVehicle(){
+  const plate    = document.getElementById('veh-plate').value.trim();
+  const province = document.getElementById('veh-province').value.trim();
+  const house    = document.getElementById('veh-house').value;
+  const type     = document.getElementById('veh-type').value;
+  const brand    = document.getElementById('veh-brand').value.trim();
+  const color    = document.getElementById('veh-color').value.trim();
+  if (!plate || !province || !house){ showToast('กรุณากรอกทะเบียน จังหวัด และเลือกบ้านเลขที่'); return; }
+  const fullPlate = plate + ' ' + province;
+  // ดึงชื่อเจ้าของจาก residents
+  const owner = (appData.residents||[]).find(r=>r.house===house);
+  showLoading();
+  try {
+    await jsonp('registerVehicle',{
+      plate:fullPlate, owner:owner?owner.owner:'', house, phone:owner?owner.phone:'',
+      brand, color, type, regBy:'admin', method:'กรอกเอง (Admin)'
+    });
+    hideLoading(); showToast('✅ เพิ่มรถเรียบร้อย');
+    closeModal('vehicle');
+    await loadAll();
+  } catch(e){ hideLoading(); showToast('❌ ' + e.message); }
+}
+
+async function deleteVehicle(plate){
+  if (!confirm('ยืนยันลบรถ ' + plate + '?')) return;
+  showToast('⚠️ ฟีเจอร์ลบรถต้องเพิ่ม action ใน Apps Script — จะทำในรอบถัดไป');
+}
+
+function closeModal(name){ document.getElementById('modal-'+name).classList.remove('show'); }
+
+// HOUSE DROPDOWN (ใน modal รถ)
+function populateHouseDropdown(){
+  const sel = document.getElementById('veh-house');
+  const cur = sel.value;
+  while (sel.options.length > 1) sel.remove(1);
+  (appData.residents||[]).forEach(r=>{
+    const opt = document.createElement('option');
+    opt.value = r.house; opt.textContent = r.house + ' — ' + r.owner;
+    sel.appendChild(opt);
+  });
+  if (cur) sel.value = cur;
+}
+
+// SEARCH / FILTER TABLE
+function filterTable(val, tbodyId){
+  const rows = document.getElementById(tbodyId).querySelectorAll('tr');
+  const q = val.toLowerCase();
+  rows.forEach(row => { row.style.display = (!q || (row.dataset.search||'').includes(q)) ? '' : 'none'; });
+}
+
+// PROVINCE AUTOCOMPLETE
+function filterProv(val, listId){
+  const list = document.getElementById(listId);
+  if (!val){ list.style.display='none'; return; }
+  const m = PROVINCES.filter(p=>p.includes(val));
+  if (!m.length){ list.style.display='none'; return; }
+  const inputMap = {'veh-prov-list':'veh-province'};
+  const inputId = inputMap[listId] || '';
+  list.innerHTML = m.slice(0,6).map(p=>{
+    const i=p.indexOf(val);
+    return `<div class="p-item" onclick="selProv('${p}','${listId}','${inputId}')">${p.slice(0,i)}<span class="p-match">${p.slice(i,i+val.length)}</span>${p.slice(i+val.length)}</div>`;
+  }).join('');
+  list.style.display='block';
+}
+function selProv(p,listId,inputId){ if(inputId)document.getElementById(inputId).value=p; document.getElementById(listId).style.display='none'; }
+document.addEventListener('click',e=>{ document.querySelectorAll('.province-suggestions').forEach(el=>{ if(!e.target.closest('.province-wrap'))el.style.display='none'; }); });
+
+// JSONP
+function jsonp(action,params){
+  return new Promise((resolve,reject)=>{
+    const cb='cb_'+Math.random().toString(36).slice(2);
+    const s=document.createElement('script');
+    const t=setTimeout(()=>{ delete window[cb]; try{document.body.removeChild(s);}catch(e){} reject(new Error('timeout')); },15000);
+    window[cb]=(d)=>{ clearTimeout(t); delete window[cb]; try{document.body.removeChild(s);}catch(e){} resolve(d); };
+    let url=API_URL+'?action='+action+'&callback='+cb;
+    Object.entries(params).forEach(([k,v])=>{ url+=`&${k}=${encodeURIComponent(v)}`; });
+    s.src=url; s.onerror=()=>{clearTimeout(t);reject(new Error('JSONP error'));}; document.body.appendChild(s);
+  });
+}
+
+function showLoading(){ document.getElementById('loading').classList.add('show'); }
+function hideLoading(){ document.getElementById('loading').classList.remove('show'); }
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3500); }
+</script>
 </body>
 </html>
