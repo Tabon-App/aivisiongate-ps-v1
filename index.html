@@ -383,9 +383,9 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxiPp-xyVNOw6Dm6L9Il3I2
 
 // Role → URL mapping (relative path จาก root)
 const ROLE_REDIRECT = {
-  admin:    '../admin/',
-  guard:    '../gate/',
-  resident: '../resident/',
+  admin:    'aivsg-ps/admin/',
+  guard:    'aivsg-ps/gate/',
+  resident: 'aivsg-ps/resident/',
 };
 
 const ROLE_LABEL = {
@@ -431,18 +431,17 @@ async function doLogin() {
   btn.disabled = true;
 
   try {
-    // Call Apps Script login API
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-      redirect: 'follow',
-    }).then(r => r.json()).catch(() => null);
-
-    // Fallback: local check (ถ้า API ล้มเหลว ให้ยังล็อกอินได้)
-    let result = res;
-    if (!result || result.error) {
-      result = localLogin(username, password);
+    // Call Apps Script login API via JSONP (แก้ CORS)
+    let result = null;
+    try {
+      result = await jsonpRequest(API_URL + '?action=login&username=' + encodeURIComponent(username) + '&password=' + encodeURIComponent(password));
+    } catch(e) {
+      result = null;
+    }
+    // Fallback: local check
+    if (!result || result.error || !result.success) {
+      const local = localLogin(username, password);
+      if (local.success) result = local;
     }
 
     if (result && result.success) {
@@ -470,6 +469,27 @@ async function doLogin() {
 // ============================================================
 // Local login fallback (ถ้า API ไม่ตอบสนอง)
 // ============================================================
+function jsonpRequest(url) {
+  return new Promise((resolve, reject) => {
+    const cb = 'cb_' + Math.random().toString(36).slice(2);
+    const script = document.createElement('script');
+    const timer = setTimeout(() => {
+      delete window[cb];
+      try { document.body.removeChild(script); } catch(e) {}
+      reject(new Error('timeout'));
+    }, 10000);
+    window[cb] = (data) => {
+      clearTimeout(timer);
+      delete window[cb];
+      try { document.body.removeChild(script); } catch(e) {}
+      resolve(data);
+    };
+    script.src = url + '&callback=' + cb;
+    script.onerror = () => { clearTimeout(timer); reject(new Error('error')); };
+    document.body.appendChild(script);
+  });
+}
+
 function localLogin(username, password) {
   const ADMIN_USERS = {
     'admin':  { password: 'aivsg2024', role: 'admin' },
