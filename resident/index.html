@@ -331,7 +331,7 @@ function renderNotifications(pending, all){
     <div class="notif-card pending">
       <span class="notif-type pending">⚠️ รอการอนุมัติ</span>
       <div class="notif-plate">${v.plate}</div>
-      <div class="notif-info">${v.guestName||'ผู้มาติดต่อ'} · ${v.entryTime||''}</div>
+      <div class="notif-info">${v.guestName||'ผู้มาติดต่อ'} • ${v.entryTime||''}</div>
       <div class="notif-photos"><div class="notif-photo">🪪</div><div class="notif-photo">🚗</div><div class="notif-photo">🧑</div></div>
       <div class="approve-btns">
         <button class="btn-approve" onclick="approveGuest('${v.plate}')">✅ อนุญาต</button>
@@ -342,7 +342,7 @@ function renderNotifications(pending, all){
     <div class="notif-card entry">
       <span class="notif-type entry">✅ รถเข้าแล้ว</span>
       <div class="notif-plate">${v.plate}</div>
-      <div class="notif-info">ลูกบ้าน · AUTO · ${v.entryTime||''}</div>
+      <div class="notif-info">ลูกบ้าน • AUTO • ${v.entryTime||''}</div>
     </div>`).join('');
 }
 
@@ -355,8 +355,8 @@ function renderVehicles(){
       <div class="v-header">
         <div>
           <div class="v-plate">${v.plate||''}</div>
-          <div class="v-detail">${icons[v.type]||'🚗'} ${v.brand||'—'} ${v.color?'· สี'+v.color:''} · ${v.type||'—'}</div>
-          <div class="v-reg">ลงทะเบียนโดย ${v.regBy||'—'} · ${v.method||'—'}</div>
+          <div class="v-detail">${icons[v.type]||'🚗'} ${v.brand||'—'} ${v.color?'• สี'+v.color:''} • ${v.type||'—'}</div>
+          <div class="v-reg">ลงทะเบียนโดย ${v.regBy||'—'} • ${v.method||'—'}</div>
         </div>
         <div class="v-actions">
           <button class="btn-edit" onclick="editVehicle(${i})">✏️ แก้ไข</button>
@@ -448,8 +448,7 @@ async function approveGuest(plate){
   showLoading('กำลังอนุมัติ...');
   try {
     await jsonp('updateVisitorStatus',{plate,status:'ยืนยันแล้ว'});
-    await jsonp('logEntry',{plate,type:'ผู้มาติดต่อ',house:user.house,phone:'',brand:'',color:'',approvedBy:user.username,status:'ยืนยันแล้ว',guestName:''});
-    hideLoading(); showToast('✅ อนุมัติแล้ว — เปิดประตู'); loadNotifications();
+    hideLoading(); showToast('✅ อนุมัติแล้ว — รปภ จะเปิดประตู'); loadNotifications();
   } catch(e){ hideLoading(); showToast('❌ ' + e.message); }
 }
 
