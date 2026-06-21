@@ -569,15 +569,25 @@ async function triggerAutoScan(){
 
 // ============================================================
 
-// เรียก Gemini ผ่าน GAS proxy (action=scanVehicle) แทนการเรียก Gemini API ตรงจาก browser
-// GAS เป็นคนถือ API key เพียงผู้เดียว — client ไม่มีทางเห็น key เลย
+// เรียก Gemini ผ่าน GAS proxy แบบ write-then-poll:
+// GAS Web App ไม่รองรับ CORS preflight เลยไม่ว่ากรณีใด จึงต้องส่งแบบ no-cors (ทางเดียว ไม่มี preflight)
+// แล้วใช้ JSONP (ผ่าน <script> tag เดิมของระบบ) มา poll ผลลัพธ์แทนการรอ response ตรงๆ
 async function scanVehicleViaProxy(b64){
-  const res = await fetch(API_URL + '?action=scanVehicle', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ image: b64 })
-  });
-  const d = await res.json();
+  const requestId = 'req_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+  // ขั้นที่ 1: ส่งรูปไปคิว (fire-and-forget — ไม่อ่าน response เลย จึงไม่เกิด preflight)
+  fetch(API_URL + '?action=scanVehicle', {
+    method: 'POST', mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ requestId, image: b64 })
+  }).catch(()=>{});
+  // ขั้นที่ 2: poll ผลลัพธ์ด้วย JSONP ทุก 1.5 วิ จนกว่าจะได้ผล (สูงสุด ~20 วิ)
+  let d = null;
+  for (let i = 0; i < 13; i++){
+    await new Promise(r => setTimeout(r, 1500));
+    const res = await jsonp('getScanResult', { requestId });
+    if (res.status !== 'pending'){ d = res; break; }
+  }
+  if (!d) throw new Error('สแกนใช้เวลานานเกินไป — ลองใหม่');
   if (d.status === 'error'){
     console.error('scanVehicle proxy error:', d);
     if (d.raw) console.error('Raw Gemini response via proxy:', d.raw);
@@ -823,11 +833,18 @@ async function startIdScan(plate){
   showLoading('Gemini กำลังอ่านบัตรประชาชน...');
   const b64 = captureFrame();
   try {
-    const res = await fetch(API_URL + '?action=scanID', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: b64 })
-    });
-    const sd = await res.json();
+    const requestId = 'req_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    fetch(API_URL + '?action=scanID', {
+      method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ requestId, image: b64 })
+    }).catch(()=>{});
+    let sd = null;
+    for (let i = 0; i < 13; i++){
+      await new Promise(r => setTimeout(r, 1500));
+      const res = await jsonp('getScanResult', { requestId });
+      if (res.status !== 'pending'){ sd = res; break; }
+    }
+    if (!sd) sd = { status: 'error' };
     hideLoading();
     const d = { id: sd.idNumber || '', name: sd.name || '', dob: sd.dob || '', address: sd.address || '' };
     if (sd.status === 'error' || !d.name){ showToast('อ่านบัตรไม่ได้ — ลองใหม่'); return; }
