@@ -576,15 +576,29 @@ async function analyzeID(b64){
   document.getElementById('btn-cap-id').disabled = true;
   showLoading('Gemini AI กำลังอ่านบัตรประชาชน...');
   try {
-    const prompt = `คุณคือระบบอ่านบัตรประชาชนไทย/ใบขับขี่
-ตอบ JSON เท่านั้น ห้าม markdown ห้ามมีข้อความอื่นนอกเหนือจาก JSON object:
-{"name":"ชื่อ-สกุลภาษาไทย","idNumber":"เลขบัตร 13 หลัก","dob":"วันเดือนปีเกิด","address":"ที่อยู่บนบัตร"}
-ถ้าไม่ใช่บัตรหรืออ่านไม่ออกเลย: {"name":"","idNumber":"","dob":"","address":""}`;
+    const prompt = `คุณคือระบบอ่านบัตรประชาชนไทย/ใบขับขี่ อ่านข้อมูลจากบัตรในภาพ: ชื่อ-สกุลภาษาไทย, เลขบัตร 13 หลัก, วันเดือนปีเกิด, ที่อยู่บนบัตร ถ้าอ่านอะไรไม่ได้หรือไม่ใช่บัตรให้ใส่ค่าว่าง`;
+    const idSchema = {
+      type: "OBJECT",
+      properties: {
+        name:    { type: "STRING", description: "ชื่อ-สกุลภาษาไทย ถ้าอ่านไม่ได้ให้เป็นค่าว่าง" },
+        idNumber:{ type: "STRING", description: "เลขบัตรประชาชน 13 หลัก ถ้าอ่านไม่ได้ให้เป็นค่าว่าง" },
+        dob:     { type: "STRING", description: "วันเดือนปีเกิด ถ้าอ่านไม่ได้ให้เป็นค่าว่าง" },
+        address: { type: "STRING", description: "ที่อยู่บนบัตร ถ้าอ่านไม่ได้ให้เป็นค่าว่าง" }
+      },
+      required: ["name", "idNumber", "dob", "address"]
+    };
     const res  = await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{parts:[{text:prompt},{inline_data:{mime_type:'image/jpeg',data:b64}}]}],
-      generationConfig:{temperature:0.1,maxOutputTokens:300}})});
+      generationConfig:{temperature:0.1,maxOutputTokens:300,responseMimeType:'application/json',responseSchema:idSchema}})});
     const data = await res.json();
+    if (data.error) {
+      console.error('Gemini API error:', data.error);
+      throw new Error('Gemini API: ' + (data.error.message || data.error.status || 'unknown error'));
+    }
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if (!rawText) {
+      console.error('Gemini unexpected response:', JSON.stringify(data));
+    }
     let d = {};
     let parseFailed = false;
     try {
@@ -748,15 +762,21 @@ async function checkFace(b64){
   document.getElementById('btn-cap-face').disabled = true;
   showLoading('ตรวจสอบคุณภาพรูปใบหน้า...');
   try {
-    const prompt = `ตรวจรูปใบหน้า ตอบ JSON เท่านั้น:
-{"quality":"good" หรือ "bad","reason":"เหตุผลสั้นๆภาษาไทย"}
-good=เห็นหน้าชัด แสงพอ ไม่เบลอ | bad=มืด/เบลอ/ไม่เห็นหน้า`;
+    const prompt = `ตรวจสอบคุณภาพของรูปใบหน้านี้ ว่าเห็นหน้าชัดเจน แสงเพียงพอ และไม่เบลอหรือไม่`;
+    const faceSchema = {
+      type: "OBJECT",
+      properties: {
+        quality: { type: "STRING", enum: ["good", "bad"], description: "good ถ้าเห็นหน้าชัด แสงพอ ไม่เบลอ, bad ถ้ามืด/เบลอ/ไม่เห็นหน้า" },
+        reason:  { type: "STRING", description: "เหตุผลสั้นๆ ภาษาไทย" }
+      },
+      required: ["quality", "reason"]
+    };
     const res  = await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{parts:[{text:prompt},{inline_data:{mime_type:'image/jpeg',data:b64}}]}],
-      generationConfig:{temperature:0.1,maxOutputTokens:100}})});
+      generationConfig:{temperature:0.1,maxOutputTokens:100,responseMimeType:'application/json',responseSchema:faceSchema}})});
     const data = await res.json();
     let q={quality:'bad',reason:'ไม่ชัด'};
-    try{ q=JSON.parse((data.candidates?.[0]?.content?.parts?.[0]?.text||'{}').replace(/```json|```/g,'').trim()); }catch(e){}
+    try{ q=JSON.parse((data.candidates?.[0]?.content?.parts?.[0]?.text||'{}').replace(/```json|```/g,'').trim()); }catch(e){ console.error('Face quality parse failed:', data); }
     hideLoading();
     st.faceOk = q.quality==='good';
     document.getElementById('face-thumb').src = 'data:image/jpeg;base64,'+b64;
