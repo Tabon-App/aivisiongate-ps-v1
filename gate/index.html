@@ -548,10 +548,17 @@ async function triggerAutoScan(){
   const b64 = captureFrame();
   setCamStatus('🔍 Gemini อ่านทะเบียน...', true);
   try {
-    const raw = await callGemini(b64, VEHICLE_READ_PROMPT);
+    const raw = await callGemini(b64, VEHICLE_READ_PROMPT, VEHICLE_SCHEMA);
     const info = parseVehicleJSON(raw);
     if (!info.plate){
-      setCamStatus('ไม่เจอทะเบียน — รอรถใหม่', false);
+      // ถ้า parse ไม่ผ่าน (_rawDebug มีค่า) แสดง raw response บางส่วนให้เห็นสาเหตุจริง
+      if (info._rawDebug) {
+        const preview = info._rawDebug.slice(0, 60).replace(/\n/g,' ');
+        setCamStatus('⚠️ AI ตอบรูปแบบผิด: ' + preview, false);
+        showToast('⚠️ Gemini ตอบไม่ตรงรูปแบบ — ดู console (F12) สำหรับรายละเอียดเต็ม');
+      } else {
+        setCamStatus('ไม่เจอทะเบียน — รอรถใหม่', false);
+      }
       setTimeout(() => { cooldown = false; isScanning = false; setCamStatus('รอรถเข้าเฟรม', false); }, 3000);
       return;
     }
@@ -559,7 +566,9 @@ async function triggerAutoScan(){
     showToast('🚗 พบทะเบียน: ' + info.plate);
     await checkPlate(info.plate, b64, info);
   } catch(e){
-    setCamStatus('❌ Error — รอใหม่', false);
+    console.error('triggerAutoScan error:', e);
+    setCamStatus('❌ ' + e.message, false);
+    showToast('❌ Gemini Error: ' + e.message);
   }
   setTimeout(() => {
     cooldown = false; isScanning = false; prevFrame = null;
@@ -572,14 +581,29 @@ async function triggerAutoScan(){
 // ============================================================
 // Prompt มาตรฐาน — ให้ Gemini อ่านรายละเอียดรถครบทุกครั้ง (แม้อ่านทะเบียนไม่ได้)
 // เพื่อให้ guard เห็นว่า AI อ่านอะไรได้บ้าง ไม่ใช่แค่บอกว่า "ไม่พบ"
-const VEHICLE_READ_PROMPT = `วิเคราะห์ภาพรถคันนี้ ตอบเป็น JSON เท่านั้น ห้ามมี markdown หรือข้อความอื่น:
-{"plate":"เลขทะเบียนที่อ่านได้ (ไม่ต้องมีจังหวัด) หรือค่าว่างถ้าอ่านไม่ได้","province":"จังหวัดบนป้าย หรือค่าว่างถ้าไม่เห็น","brand":"ยี่ห้อรถที่สังเกตเห็น เช่น Toyota Honda หรือค่าว่างถ้าไม่แน่ใจ","color":"สีรถ","hasVehicle":true หรือ false}
-ถ้าในภาพไม่มีรถเลย ให้ hasVehicle เป็น false และ field อื่นเป็นค่าว่างทั้งหมด`;
+const VEHICLE_READ_PROMPT = `วิเคราะห์ภาพรถคันนี้และอ่านป้ายทะเบียน ระบุเลขทะเบียน จังหวัด ยี่ห้อ และสีรถที่เห็นในภาพ ถ้าอ่านอะไรไม่ได้ให้ใส่ค่าว่าง`;
+
+// บังคับ Gemini ให้ตอบ JSON ตาม schema นี้เสมอ (ใช้ responseSchema ของ Gemini API)
+// แก้ปัญหาเดิมที่ Gemini บางครั้งตอบ text ปนมา ทำให้ parse JSON ฝั่งเราพังเงียบๆ
+const VEHICLE_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    plate:      { type: "STRING", description: "เลขทะเบียนที่อ่านได้ ไม่ต้องมีจังหวัด ถ้าอ่านไม่ได้ให้เป็นค่าว่าง" },
+    province:   { type: "STRING", description: "จังหวัดบนป้ายทะเบียน ถ้าไม่เห็นให้เป็นค่าว่าง" },
+    brand:      { type: "STRING", description: "ยี่ห้อรถที่สังเกตเห็น เช่น Toyota Honda ถ้าไม่แน่ใจให้เป็นค่าว่าง" },
+    color:      { type: "STRING", description: "สีรถ" },
+    hasVehicle: { type: "BOOLEAN", description: "true ถ้ามีรถอยู่ในภาพ false ถ้าไม่มี" }
+  },
+  required: ["plate", "province", "brand", "color", "hasVehicle"]
+};
 
 function parseVehicleJSON(raw){
   try {
-    const clean = raw.replace(/```json|```/g,'').trim();
-    const d = JSON.parse(clean);
+    let cleaned = raw.replace(/```json|```/g,'').trim();
+    // ดึงเฉพาะส่วนที่เป็น JSON object ออกมา กันกรณี Gemini พูดอธิบายนำหน้า/ต่อท้าย JSON
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (match) cleaned = match[0];
+    const d = JSON.parse(cleaned);
     return {
       plate: (d.plate||'').trim(),
       province: (d.province||'').trim(),
@@ -588,21 +612,40 @@ function parseVehicleJSON(raw){
       hasVehicle: !!d.hasVehicle
     };
   } catch(e){
-    return { plate:'', province:'', brand:'', color:'', hasVehicle:false };
+    // สำคัญ: log raw response เสมอเมื่อ parse ไม่ผ่าน เพื่อ debug ได้จริง
+    // ก่อนหน้านี้ catch ว่างเปล่าทำให้ TaBon ไม่รู้สาเหตุว่าทำไม Auto-Scan ไม่เจอป้าย
+    console.error('parseVehicleJSON failed. Raw Gemini response:', raw);
+    return { plate:'', province:'', brand:'', color:'', hasVehicle:false, _rawDebug: raw };
   }
 }
 
-async function callGemini(b64, prompt){
+async function callGemini(b64, prompt, schema){
+  const generationConfig = { temperature:0.1, maxOutputTokens:300 };
+  // ถ้ามี schema ระบุมา บังคับ Gemini ให้ตอบ JSON ที่ valid ตาม schema เสมอ
+  // กันปัญหา Gemini แทรกคำอธิบายปนมา หรือตอบรูปแบบไม่ตรง ที่ทำให้ parse JSON ฝั่งเราพังเงียบๆ
+  if (schema) {
+    generationConfig.responseMimeType = 'application/json';
+    generationConfig.responseSchema = schema;
+  }
   const res = await fetch(GEMINI_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents:[{ parts:[{ text:prompt },{ inline_data:{ mime_type:'image/jpeg', data:b64 }}]}],
-      generationConfig:{ temperature:0.1, maxOutputTokens:300 }
+      generationConfig
     })
   });
   const d = await res.json();
-  return (d.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
+  if (d.error) {
+    console.error('Gemini API error:', d.error);
+    throw new Error('Gemini: ' + (d.error.message || d.error.status || 'unknown error'));
+  }
+  const text = d.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) {
+    console.error('Gemini unexpected response:', JSON.stringify(d));
+    throw new Error('Gemini ตอบกลับผิดรูปแบบ — ดู console สำหรับรายละเอียด');
+  }
+  return text.trim();
 }
 
 // ============================================================
@@ -641,7 +684,7 @@ async function captureAndScan(){
   const b64 = captureFrame();
   showLoading('Gemini AI กำลังอ่านทะเบียน...');
   try {
-    const raw = await callGemini(b64, VEHICLE_READ_PROMPT);
+    const raw = await callGemini(b64, VEHICLE_READ_PROMPT, VEHICLE_SCHEMA);
     const info = parseVehicleJSON(raw);
     hideLoading();
     if (!info.plate){ showResult_unreadable(b64, info); return; }
