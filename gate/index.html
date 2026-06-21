@@ -254,7 +254,6 @@ canvas{display:none}
   <div class="tab" id="tab-manual" onclick="setMode('manual')">⌨️ พิมพ์</div>
   <div class="tab" id="tab-visitor" onclick="setMode('visitor')">📋 แขกขอเข้า</div>
   <div class="tab" id="tab-pin" onclick="setMode('pin')">🔢 PIN</div>
-  <div class="tab" id="tab-active" onclick="setMode('active')">🚗 ในหมู่บ้าน</div>
 </div>
 
 <div class="manual-wrap" id="manual-wrap">
@@ -272,6 +271,14 @@ canvas{display:none}
 <!-- VISITOR FORM -->
 <div class="visitor-form" id="visitor-form">
   <div class="form-title">⚠️ แขกขอเข้าหมู่บ้าน</div>
+
+  <!-- กล้องสำหรับถ่ายบัตร/หน้าคน — ใช้กล้องหน้าเป็นค่าเริ่มต้น แยกจากกล้องหลัก -->
+  <div class="visitor-cam-wrap" style="position:relative;border-radius:12px;overflow:hidden;margin-bottom:10px;background:#000">
+    <video id="video-visitor" autoplay playsinline muted style="width:100%;display:block;max-height:240px;object-fit:cover"></video>
+    <button onclick="switchVisitorCamera()" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:20px;padding:6px 12px;font-size:12px;cursor:pointer">🔄 สลับกล้อง</button>
+    <div id="visitor-cam-label" style="position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,0.6);color:#0f8;font-size:11px;padding:3px 8px;border-radius:10px">📷 กล้องหน้า</div>
+  </div>
+
   <div class="photo-grid">
     <div class="photo-btn" id="photo-id" onclick="capturePhoto('id')">
       <div class="photo-icon">🪪</div>
@@ -279,7 +286,7 @@ canvas{display:none}
     </div>
     <div class="photo-btn" id="photo-car" onclick="capturePhoto('car')">
       <div class="photo-icon">🚗</div>
-      <div class="photo-lbl">ถ่ายรูปรถ<br>+ ป้ายทะเบียน</div>
+      <div class="photo-lbl">ถ่ายรูปรถ<br>(ไม่บังคับ)</div>
     </div>
     <div class="photo-btn" id="photo-face" onclick="capturePhoto('face')">
       <div class="photo-icon">🧑</div>
@@ -337,15 +344,6 @@ canvas{display:none}
   </div>
 </div>
 
-<!-- ACTIVE -->
-<div class="active-section" id="active-section">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-    <div style="font-size:12px;color:rgba(255,255,255,0.4);font-weight:700">รถในหมู่บ้านตอนนี้</div>
-    <button onclick="loadActive()" style="font-size:11px;color:#00c878;background:rgba(0,200,120,0.08);border:1px solid rgba(0,200,120,0.15);border-radius:20px;padding:4px 10px;cursor:pointer">🔄 รีเฟรช</button>
-  </div>
-  <div id="active-list"><div style="text-align:center;padding:16px;color:rgba(255,255,255,0.25);font-size:12px">กำลังโหลด...</div></div>
-</div>
-
 <div class="log-strip">
   <div class="log-title">บันทึกวันนี้</div>
   <div id="log-list"><div style="font-size:11px;color:rgba(255,255,255,0.2);text-align:center;padding:6px">ยังไม่มีบันทึก</div></div>
@@ -388,6 +386,8 @@ let guardInfo   = { username:'guard1', role:'guard' };
 let wakeLock    = null;
 let photoCaptures = { id:null, car:null, face:null };
 let houseList   = [];
+let visitorStream = null;
+let visitorFacing = 'user'; // 'user' = กล้องหน้า (default), 'environment' = กล้องหลัง
 
 // ============================================================
 // INIT
@@ -437,6 +437,43 @@ function captureFrame(){
   c.getContext('2d').drawImage(video, 0, 0);
   lastB64 = c.toDataURL('image/jpeg', 0.85).split(',')[1];
   return lastB64;
+}
+
+// ============================================================
+// VISITOR CAMERA — กล้องแยกสำหรับถ่ายบัตร/หน้าคน เริ่มต้นเป็นกล้องหน้าเสมอ
+// ============================================================
+async function startVisitorCamera(facing){
+  facing = facing || visitorFacing;
+  try {
+    if (visitorStream){ visitorStream.getTracks().forEach(t=>t.stop()); }
+    visitorStream = await navigator.mediaDevices.getUserMedia({
+      video:{ facingMode: facing, width:{ideal:1280}, height:{ideal:720} }
+    });
+    document.getElementById('video-visitor').srcObject = visitorStream;
+    visitorFacing = facing;
+    document.getElementById('visitor-cam-label').textContent =
+      facing === 'user' ? '📷 กล้องหน้า' : '📷 กล้องหลัง';
+  } catch(e){
+    showToast('❌ เปิดกล้องไม่ได้: ' + e.message);
+  }
+}
+
+function switchVisitorCamera(){
+  const next = visitorFacing === 'user' ? 'environment' : 'user';
+  startVisitorCamera(next);
+}
+
+function stopVisitorCamera(){
+  if (visitorStream){ visitorStream.getTracks().forEach(t=>t.stop()); visitorStream = null; }
+}
+
+function captureVisitorFrame(){
+  const video = document.getElementById('video-visitor');
+  const c = document.getElementById('canvas-main');
+  c.width = video.videoWidth || 1280;
+  c.height = video.videoHeight || 720;
+  c.getContext('2d').drawImage(video, 0, 0);
+  return c.toDataURL('image/jpeg', 0.85).split(',')[1];
 }
 
 function setCamStatus(text, scanning){
@@ -511,15 +548,16 @@ async function triggerAutoScan(){
   const b64 = captureFrame();
   setCamStatus('🔍 Gemini อ่านทะเบียน...', true);
   try {
-    const plate = await callGemini(b64, 'อ่านทะเบียนรถในภาพ ตอบแค่ตัวเลขและตัวอักษรบนป้ายทะเบียน เช่น "กษ 1234 ขอนแก่น" ถ้าไม่มีรถหรืออ่านไม่ได้ตอบว่า "NONE"');
-    if (!plate || plate === 'NONE' || plate === 'UNREADABLE'){
+    const raw = await callGemini(b64, VEHICLE_READ_PROMPT);
+    const info = parseVehicleJSON(raw);
+    if (!info.plate){
       setCamStatus('ไม่เจอทะเบียน — รอรถใหม่', false);
       setTimeout(() => { cooldown = false; isScanning = false; setCamStatus('รอรถเข้าเฟรม', false); }, 3000);
       return;
     }
-    setCamStatus('✅ พบ: ' + plate, false);
-    showToast('🚗 พบทะเบียน: ' + plate);
-    await checkPlate(plate, b64);
+    setCamStatus('✅ พบ: ' + info.plate, false);
+    showToast('🚗 พบทะเบียน: ' + info.plate);
+    await checkPlate(info.plate, b64, info);
   } catch(e){
     setCamStatus('❌ Error — รอใหม่', false);
   }
@@ -532,6 +570,28 @@ async function triggerAutoScan(){
 // ============================================================
 // GEMINI (เรียกโดยตรงจาก browser)
 // ============================================================
+// Prompt มาตรฐาน — ให้ Gemini อ่านรายละเอียดรถครบทุกครั้ง (แม้อ่านทะเบียนไม่ได้)
+// เพื่อให้ guard เห็นว่า AI อ่านอะไรได้บ้าง ไม่ใช่แค่บอกว่า "ไม่พบ"
+const VEHICLE_READ_PROMPT = `วิเคราะห์ภาพรถคันนี้ ตอบเป็น JSON เท่านั้น ห้ามมี markdown หรือข้อความอื่น:
+{"plate":"เลขทะเบียนที่อ่านได้ (ไม่ต้องมีจังหวัด) หรือค่าว่างถ้าอ่านไม่ได้","province":"จังหวัดบนป้าย หรือค่าว่างถ้าไม่เห็น","brand":"ยี่ห้อรถที่สังเกตเห็น เช่น Toyota Honda หรือค่าว่างถ้าไม่แน่ใจ","color":"สีรถ","hasVehicle":true หรือ false}
+ถ้าในภาพไม่มีรถเลย ให้ hasVehicle เป็น false และ field อื่นเป็นค่าว่างทั้งหมด`;
+
+function parseVehicleJSON(raw){
+  try {
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const d = JSON.parse(clean);
+    return {
+      plate: (d.plate||'').trim(),
+      province: (d.province||'').trim(),
+      brand: (d.brand||'').trim(),
+      color: (d.color||'').trim(),
+      hasVehicle: !!d.hasVehicle
+    };
+  } catch(e){
+    return { plate:'', province:'', brand:'', color:'', hasVehicle:false };
+  }
+}
+
 async function callGemini(b64, prompt){
   const res = await fetch(GEMINI_URL, {
     method: 'POST',
@@ -561,11 +621,15 @@ function setMode(mode){
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-' + mode).classList.add('active');
   document.getElementById('manual-wrap').className  = mode === 'manual' ? 'manual-wrap show' : 'manual-wrap';
-  document.getElementById('action-row').style.display = ['visitor','pin','active'].includes(mode) ? 'none' : 'flex';
+  document.getElementById('action-row').style.display = ['visitor','pin'].includes(mode) ? 'none' : 'flex';
   document.getElementById('visitor-form').className = mode === 'visitor' ? 'visitor-form show' : 'visitor-form';
   document.getElementById('pin-wrap').className     = mode === 'pin' ? 'pin-wrap show' : 'pin-wrap';
-  document.getElementById('active-section').className = mode === 'active' ? 'active-section show' : 'active-section';
-  if (mode === 'active') loadActive();
+  if (mode === 'visitor'){
+    visitorFacing = 'user'; // กลับมาเปิด tab แขกทีไร เริ่มกล้องหน้าใหม่เสมอ
+    startVisitorCamera('user');
+  } else {
+    stopVisitorCamera();
+  }
   clearResult();
 }
 
@@ -577,23 +641,27 @@ async function captureAndScan(){
   const b64 = captureFrame();
   showLoading('Gemini AI กำลังอ่านทะเบียน...');
   try {
-    const plate = await callGemini(b64, 'อ่านทะเบียนรถในภาพ ตอบแค่ตัวเลขและตัวอักษรบนป้ายทะเบียน เช่น "กษ 1234 ขอนแก่น" ถ้าอ่านไม่ได้ตอบว่า "UNREADABLE"');
+    const raw = await callGemini(b64, VEHICLE_READ_PROMPT);
+    const info = parseVehicleJSON(raw);
     hideLoading();
-    if (!plate || plate === 'UNREADABLE'){ showResult_unreadable(b64); return; }
-    await checkPlate(plate, b64);
+    if (!info.plate){ showResult_unreadable(b64, info); return; }
+    await checkPlate(info.plate, b64, info);
   } catch(e){ hideLoading(); showToast('❌ ' + e.message); }
 }
 
 async function manualCheck(){
   const plate = document.getElementById('manual-plate').value.trim();
   if (!plate){ showToast('กรุณากรอกทะเบียน'); return; }
-  await checkPlate(plate, null);
+  // ถ่ายรูปจากกล้อง ณ ขณะนี้เสมอ แม้เป็นการพิมพ์ทะเบียนเอง (ไม่ใช่ auto-scan)
+  // เพื่อให้ manual open มีรูปบันทึกเสมอตามที่ต้องการ
+  const b64 = captureFrame();
+  await checkPlate(plate, b64, null);
 }
 
 // ============================================================
 // CHECK PLATE
 // ============================================================
-async function checkPlate(plate, b64){
+async function checkPlate(plate, b64, info){
   showLoading('กำลังตรวจสอบฐานข้อมูล...');
   try {
     let res;
@@ -602,7 +670,7 @@ async function checkPlate(plate, b64){
       hideLoading();
       if (res.found && res.type === 'resident') showResult_resident(plate, res, b64);
       else if (res.found && res.type === 'expected') showResult_expected(plate, res, b64);
-      else showResult_visitor(plate, res, b64);
+      else showResult_visitor(plate, res, b64, info);
     } else {
       res = await jsonp('checkPlateExit', { plate });
       hideLoading();
@@ -646,13 +714,20 @@ function showResult_expected(plate, d, b64){
   </div>`);
 }
 
-function showResult_visitor(plate, d, b64){
+function showResult_visitor(plate, d, b64, info){
   const hist = (d.history||[]).map(h=>`<div class="log-item"><span class="log-plate">${h.date}</span><span>${h.house}</span></div>`).join('') || '<div style="font-size:11px;color:rgba(255,255,255,0.25)">ไม่พบประวัติ</div>';
+  // แสดงรายละเอียดที่ Gemini อ่านได้เสมอ แม้ไม่พบในระบบ — ช่วยให้ guard เห็นว่า AI อ่านอะไร
+  const detailBox = info ? `
+    <div class="info-grid" style="margin-top:8px">
+      <div class="info-item"><div class="info-lbl">จังหวัด</div><div class="info-val">${info.province || 'ไม่ระบุ'}</div></div>
+      <div class="info-item"><div class="info-lbl">ยี่ห้อ/สี</div><div class="info-val">${info.brand || '—'} ${info.color || ''}</div></div>
+    </div>` : '';
   setResult(`${img(b64)}<div class="status-card visitor">
     <div class="s-icon">⚠️</div>
     <div class="s-title">ผู้มาติดต่อ — ตรวจสอบด้วย</div>
     <div class="s-sub">ไม่พบในระบบ กรุณาสแกนบัตรประชาชน</div>
     <div class="plate-box"><div class="plate-txt">${plate}</div></div>
+    ${detailBox}
     <div class="log-strip" style="margin:8px 0 0;padding:8px 10px"><div class="log-title">ประวัติก่อนหน้า</div>${hist}</div>
     <button class="btn-scan-id" onclick="startIdScan('${plate}')">🪪 สแกนบัตรประชาชน (Gemini)</button>
     <div class="action-btns" style="margin-top:6px">
@@ -662,11 +737,18 @@ function showResult_visitor(plate, d, b64){
   </div>`);
 }
 
-function showResult_unreadable(b64){
+function showResult_unreadable(b64, info){
+  // แสดงรายละเอียดที่ Gemini อ่านได้บางส่วน (ถ้ามี) แทนที่จะบอกแค่ "อ่านไม่ได้" เฉยๆ
+  const detailBox = (info && (info.province||info.brand||info.color)) ? `
+    <div class="info-grid" style="margin-top:8px">
+      <div class="info-item"><div class="info-lbl">จังหวัด</div><div class="info-val">${info.province || 'ไม่ระบุ'}</div></div>
+      <div class="info-item"><div class="info-lbl">ยี่ห้อ/สี</div><div class="info-val">${info.brand || '—'} ${info.color || ''}</div></div>
+    </div>` : '';
   setResult(`${img(b64)}<div class="status-card unknown">
     <div class="s-icon">❓</div>
     <div class="s-title">อ่านทะเบียนไม่ได้</div>
-    <div class="s-sub">ภาพไม่ชัด หรือมุมกล้องไม่ดี</div>
+    <div class="s-sub">ภาพไม่ชัด หรือมุมกล้องไม่ดี — แต่ Gemini เห็นรายละเอียดอื่นดังนี้</div>
+    ${detailBox}
     <div class="action-btns" style="margin-top:12px">
       <button class="btn-open" onclick="setMode('manual');clearResult()">⌨️ พิมพ์เอง</button>
       <button class="btn-deny" onclick="clearResult()">✕</button>
@@ -710,12 +792,13 @@ async function openGate(plate, type, house, phone, brand, color){
   if (countdownT) clearInterval(countdownT);
   showLoading('กำลังบันทึก Log...');
   try {
-    // ส่งรูปไป Drive (no-cors = fire & forget)
-    if (lastB64){
+    // ถ่ายรูปทุกครั้งที่เปิดประตู — ถ้ายังไม่มีรูปจากการสแกน (เช่น มาจาก PIN/พิมพ์) ให้ถ่ายจากกล้องตอนนี้แทน
+    const photoB64 = lastB64 || captureFrame();
+    if (photoB64){
       fetch(API_URL + '?action=savePhoto', {
         method:'POST', mode:'no-cors',
         headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ plate, photo:lastB64, direction:'entry', type, approvedBy:type==='resident'?'AUTO':guardInfo.username })
+        body: JSON.stringify({ plate, photo:photoB64, direction:'entry', type, approvedBy:type==='resident'?'AUTO':guardInfo.username })
       }).catch(()=>{});
     }
     await jsonp('logEntry', { plate, type, house, phone, brand, color, approvedBy:type==='resident'?'AUTO':guardInfo.username, status:type, guestName:'' });
@@ -730,11 +813,13 @@ async function logExit(plate, house){
   if (countdownT) clearInterval(countdownT);
   showLoading('กำลังบันทึก Log ขาออก...');
   try {
-    if (lastB64){
+    // ถ่ายรูปทุกครั้งที่เปิดประตูขาออก เช่นเดียวกับขาเข้า
+    const photoB64 = lastB64 || captureFrame();
+    if (photoB64){
       fetch(API_URL + '?action=savePhoto', {
         method:'POST', mode:'no-cors',
         headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ plate, photo:lastB64, direction:'exit', approvedBy:guardInfo.username })
+        body: JSON.stringify({ plate, photo:photoB64, direction:'exit', approvedBy:guardInfo.username })
       }).catch(()=>{});
     }
     await jsonp('logExit', { plate, exitBy:guardInfo.username });
@@ -784,7 +869,8 @@ async function startIdScan(plate){
 // VISITOR FORM
 // ============================================================
 async function capturePhoto(type){
-  const b64 = captureFrame();
+  // บัตรและหน้าคน ใช้กล้องที่ถ่าย (หน้า/หลัง สลับได้) — รถใช้กล้องหลักของ gate (กล้องหลังเสมอ)
+  const b64 = (type === 'car') ? captureFrame() : captureVisitorFrame();
   photoCaptures[type] = b64;
   const btn = document.getElementById('photo-' + type);
   const lbl = btn.querySelector('.photo-lbl');
@@ -803,12 +889,14 @@ async function submitVisitor(){
   if (!plate)   { showToast('กรุณากรอกทะเบียนรถ'); return; }
   if (!province){ showToast('กรุณาระบุจังหวัด'); return; }
   if (!house)   { showToast('กรุณาเลือกบ้านเลขที่'); return; }
-  if (!photoCaptures.id && !photoCaptures.car && !photoCaptures.face){ showToast('กรุณาถ่ายรูปอย่างน้อย 1 ใบ'); return; }
+  if (!photoCaptures.id)   { showToast('กรุณาถ่ายรูปบัตร ปชช. / ใบขับขี่'); return; }
+  if (!photoCaptures.face) { showToast('กรุณาถ่ายรูปแขก (ใบหน้า)'); return; }
+  // รูปรถไม่บังคับ — ถ่ายหรือไม่ก็ได้
   const fullPlate = plate + ' ' + province;
   showLoading('กำลังแจ้งลูกบ้าน...');
   try {
-    // บันทึก pre-register
-    await jsonp('preRegister', { guestName:name, plate:fullPlate, house, residentUsername:'guard', date:new Date().toLocaleDateString('th-TH') });
+    // สร้าง pending record ใน Active_Vehicles (status: รอยืนยัน) เพื่อให้ resident เห็นและ gate poll เช็คได้
+    await jsonp('logEntry', { plate:fullPlate, type:'ผู้มาติดต่อ', house, phone:'', brand:'', color:'', approvedBy:'', status:'รอยืนยัน', guestName:name });
     // ส่งรูปทั้งหมด
     ['id','car','face'].forEach(t => {
       if (photoCaptures[t]){
@@ -821,6 +909,8 @@ async function submitVisitor(){
     });
     hideLoading();
     showToast('✅ แจ้งลูกบ้านแล้ว — รอยืนยัน');
+    // แสดงสถานะรอยืนยัน พร้อมเริ่ม poll เช็คว่าลูกบ้านอนุมัติหรือยัง
+    showWaitingApproval(fullPlate, name, house);
     // Reset form
     ['v-name','v-plate','v-province'].forEach(id => document.getElementById(id).value='');
     document.getElementById('v-house').value = '';
@@ -831,6 +921,64 @@ async function submitVisitor(){
     });
   } catch(e){ hideLoading(); showToast('❌ ' + e.message); }
 }
+
+// ============================================================
+// รอลูกบ้านอนุมัติ — poll สถานะทุก 3 วิ จนกว่าจะอนุมัติ/ปฏิเสธ/หมดเวลา
+// auto-open ต้องเช็คทะเบียนตรงกับที่ guard กรอกไว้ก่อนเปิดประตูเสมอ (กันสวมสิทธิ์)
+// ============================================================
+let approvalPollT = null;
+function showWaitingApproval(plate, name, house){
+  setMode('camera'); // กลับไปกล้องหลัก เผื่อ guard อยากสแกนต่อระหว่างรอ
+  setResult(`<div class="status-card visitor">
+    <div class="s-icon">⏳</div>
+    <div class="s-title">รอลูกบ้านยืนยัน</div>
+    <div class="s-sub">${name} · มาหาบ้าน ${house}</div>
+    <div class="plate-box"><div class="plate-txt">${plate}</div></div>
+    <div class="s-sub" style="margin-top:6px">ประตูจะเปิดอัตโนมัติเมื่อลูกบ้านอนุมัติ และทะเบียนตรงกัน</div>
+    <div class="action-btns" style="margin-top:10px">
+      <button class="btn-deny" onclick="cancelApprovalWait()">✕ ยกเลิกรอ</button>
+    </div>
+  </div>`);
+  let elapsed = 0;
+  if (approvalPollT) clearInterval(approvalPollT);
+  approvalPollT = setInterval(async () => {
+    elapsed += 3;
+    if (elapsed >= 120){ // หมดเวลารอ 2 นาที
+      clearInterval(approvalPollT);
+      showToast('⏰ หมดเวลารอลูกบ้านยืนยัน');
+      clearResult();
+      return;
+    }
+    try {
+      const res = await jsonp('getActive', {});
+      const match = (res.vehicles||[]).find(v => norm_(v.plate) === norm_(plate));
+      if (!match) return; // ยังไม่เจอ หรือถูกลบไปแล้ว (อาจถูก guard เปิดเองไปแล้ว)
+      if (match.status === 'ยืนยันแล้ว'){
+        clearInterval(approvalPollT);
+        // เช็คทะเบียนตรงกันก่อนเปิดอัตโนมัติเสมอ (กันสวมสิทธิ์)
+        if (norm_(match.plate) === norm_(plate)){
+          showToast('✅ ลูกบ้านอนุมัติแล้ว — เปิดประตูอัตโนมัติ');
+          await openGate(plate, 'ผู้มาติดต่อ', house, '', '', '');
+        } else {
+          showToast('⚠️ ทะเบียนไม่ตรง — กรุณาให้ รปภ ตรวจสอบและเปิดเอง');
+        }
+      } else if (match.status === 'ปฏิเสธแล้ว'){
+        clearInterval(approvalPollT);
+        showToast('🚫 ลูกบ้านปฏิเสธ');
+        clearResult();
+      }
+    } catch(e){ /* เงียบไว้ ลองใหม่รอบหน้า */ }
+  }, 3000);
+}
+
+function cancelApprovalWait(){
+  if (approvalPollT) clearInterval(approvalPollT);
+  showToast('ยกเลิกการรอแล้ว');
+  clearResult();
+}
+
+// ตัวช่วย normalize ทะเบียน (เผื่อ norm() ถูกประกาศที่อื่น ไม่ชนกัน)
+function norm_(s){ return (s||'').toString().replace(/\s+/g,'').toUpperCase(); }
 
 // ============================================================
 // PIN
@@ -879,20 +1027,6 @@ function denyExit(){ if (countdownT) clearInterval(countdownT); showToast('🚫 
 // ============================================================
 // ACTIVE VEHICLES
 // ============================================================
-async function loadActive(){
-  document.getElementById('active-list').innerHTML = '<div style="text-align:center;padding:16px;color:rgba(255,255,255,0.3);font-size:12px">กำลังโหลด...</div>';
-  try {
-    const res = await jsonp('getActive', {});
-    const v = res.vehicles || [];
-    if (!v.length){ document.getElementById('active-list').innerHTML = '<div style="text-align:center;padding:16px;color:rgba(255,255,255,0.25);font-size:12px">ไม่มีรถในหมู่บ้าน</div>'; return; }
-    document.getElementById('active-list').innerHTML = v.map(x=>`
-      <div class="v-item">
-        <div><div class="v-plate-sm">${x.plate}</div><div class="v-meta-sm">${x.type} · บ้าน ${x.house||'—'}</div></div>
-        <button class="btn-exit-sm" onclick="setGate('exit');checkPlate('${x.plate}',null)">ออก</button>
-      </div>`).join('');
-  } catch(e){ document.getElementById('active-list').innerHTML = `<div style="text-align:center;padding:16px;color:#ff5050;font-size:12px">${e.message}</div>`; }
-}
-
 // ============================================================
 // HOUSE LIST (สำหรับ dropdown ในฟอร์มแขก)
 // ============================================================
