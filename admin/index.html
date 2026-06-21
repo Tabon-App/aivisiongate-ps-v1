@@ -525,9 +525,23 @@ function handleAdd(){
 async function loadLog(){
   document.getElementById('log-tbody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:16px;color:rgba(255,255,255,0.25)">กำลังโหลด...</td></tr>';
   try {
-    // ดึงจาก sheet log โดยตรง (ใช้ getHistory แทน)
-    // TODO: เพิ่ม action getLog ใน Apps Script
-    document.getElementById('log-tbody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:16px;color:rgba(255,255,255,0.25)">— ดูใน Google Sheet โดยตรง —</td></tr>';
+    const res = await jsonp('getAllLogs', { limit: 100 });
+    const logs = res.logs || [];
+    if (!logs.length){
+      document.getElementById('log-tbody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:16px;color:rgba(255,255,255,0.25)">ยังไม่มีบันทึก</td></tr>';
+      return;
+    }
+    document.getElementById('log-tbody').innerHTML = logs.map(l => `
+      <tr>
+        <td>${l.entryTime||'—'}</td>
+        <td style="font-family:monospace">${l.plate||'—'}</td>
+        <td>${l.type||'—'}</td>
+        <td>${l.house||'—'}</td>
+        <td>${l.approvedBy||'—'}</td>
+        <td>${l.photoEntry ? `<a href="${l.photoEntry}" target="_blank">📷 ดูรูป</a>` : '—'}</td>
+        <td>${l.exitTime||'—'}</td>
+        <td>${l.photoExit ? `<a href="${l.photoExit}" target="_blank">📷 ดูรูป</a>` : '—'}</td>
+      </tr>`).join('');
   } catch(e){ showToast('❌ ' + e.message); }
 }
 
@@ -535,8 +549,22 @@ async function loadLog(){
 async function loadGuests(){
   document.getElementById('guest-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;color:rgba(255,255,255,0.25)">กำลังโหลด...</td></tr>';
   try {
-    document.getElementById('guest-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;color:rgba(255,255,255,0.25)">— ดูใน Google Sheet โดยตรง —</td></tr>';
-  } catch(e){}
+    const res = await jsonp('getGuestLog', { limit: 100 });
+    const guests = res.guests || [];
+    if (!guests.length){
+      document.getElementById('guest-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;color:rgba(255,255,255,0.25)">ยังไม่มีบันทึกแขก</td></tr>';
+      return;
+    }
+    document.getElementById('guest-tbody').innerHTML = guests.map(g => `
+      <tr>
+        <td>${g.datetime||'—'}</td>
+        <td>${g.name||'—'}</td>
+        <td style="font-family:monospace;font-size:11px">${g.idNumber||'—'}</td>
+        <td style="font-family:monospace">${g.plate||'—'}</td>
+        <td>${g.house||'—'}</td>
+        <td>${g.phone||'—'}</td>
+      </tr>`).join('');
+  } catch(e){ showToast('❌ ' + e.message); }
 }
 
 // RESIDENT MODAL
@@ -558,6 +586,7 @@ function editResident(house, name, username, phone){
 }
 
 async function saveResident(){
+  const editHouse = document.getElementById('res-edit-house').value.trim();
   const house    = document.getElementById('res-house').value.trim();
   const pin      = document.getElementById('res-pin').value.trim();
   const name     = document.getElementById('res-name').value.trim();
@@ -565,9 +594,22 @@ async function saveResident(){
   const password = document.getElementById('res-password').value;
   const phone    = document.getElementById('res-phone').value.trim();
   if (!house || !name || !username){ showToast('กรุณากรอกข้อมูลให้ครบ'); return; }
-  // TODO: เพิ่ม action addResident / updateResident ใน Apps Script
-  showToast('⚠️ ฟีเจอร์นี้ต้องเพิ่ม action ใน Apps Script — จะทำในรอบถัดไป');
-  closeModal('resident');
+  showLoading('กำลังบันทึก...');
+  try {
+    const result = await jsonp('saveResident', { editHouse, house, name, pin, username, password, phone });
+    hideLoading();
+    if (result.status === 'duplicate'){
+      showToast('⚠️ ' + (result.message || 'ข้อมูลซ้ำในระบบ'));
+      return;
+    }
+    if (result.status === 'error'){
+      showToast('❌ ' + (result.message || 'เกิดข้อผิดพลาด'));
+      return;
+    }
+    showToast('✅ บันทึกข้อมูลลูกบ้านเรียบร้อย');
+    closeModal('resident');
+    await loadAll();
+  } catch(e){ hideLoading(); showToast('❌ ' + e.message); }
 }
 
 // VEHICLE MODAL
@@ -604,7 +646,18 @@ async function saveVehicle(){
 
 async function deleteVehicle(plate){
   if (!confirm('ยืนยันลบรถ ' + plate + '?')) return;
-  showToast('⚠️ ฟีเจอร์ลบรถต้องเพิ่ม action ใน Apps Script — จะทำในรอบถัดไป');
+  showLoading('กำลังลบ...');
+  try {
+    // Admin ลบได้โดยไม่ต้องระบุบ้าน (house ว่าง = ลบด้วย plate อย่างเดียว)
+    const result = await jsonp('deleteVehicle', { plate, house:'' });
+    hideLoading();
+    if (result.status === 'deleted'){
+      showToast('✅ ลบรถเรียบร้อย');
+      await loadAll();
+    } else {
+      showToast('❌ ' + (result.message || 'ลบไม่สำเร็จ'));
+    }
+  } catch(e){ hideLoading(); showToast('❌ ' + e.message); }
 }
 
 function closeModal(name){ document.getElementById('modal-'+name).classList.remove('show'); }
