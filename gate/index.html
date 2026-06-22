@@ -587,14 +587,11 @@ async function triggerAutoScan(){
   isScanning = true;
   cooldown = true;
 
-  // Burst capture 2 ภาพ ห่างกัน 400ms (ลดจาก 3/500ms เพื่อความเร็ว)
-  setCamStatus('📸 Burst capture...', true);
-  const b64_1 = captureFrame();
-  await new Promise(r => setTimeout(r, 400));
-  const b64_2 = captureFrame();
-  const images = [b64_1, b64_2];
+  // ถ่ายภาพเดียว — เร็วกว่า burst และ GAS ไม่ timeout
+  setCamStatus('🔍 Gemini อ่านทะเบียน...', true);
+  const b64 = captureFrame();
+  const images = [b64];
 
-  setCamStatus('🔍 Gemini อ่านทะเบียน (2 ภาพ)...', true);
   try {
     const info = await scanVehicleViaProxy(images);
     if (!info.plate){
@@ -602,10 +599,9 @@ async function triggerAutoScan(){
       setTimeout(() => { cooldown = false; isScanning = false; setCamStatus('รอรถเข้าเฟรม', false); }, 3000);
       return;
     }
-    const voteInfo = info.voteWin ? ` (${info.voteWin}/${info.scanCount})` : '';
-    setCamStatus('✅ พบ: ' + info.plate + voteInfo, false);
-    showToast('🚗 พบทะเบียน: ' + info.plate + voteInfo);
-    await checkPlate(info.plate, b64_2, info); // ใช้ภาพที่ 2 (ใกล้สุด) เป็น photo หลัก
+    setCamStatus('✅ พบ: ' + info.plate, false);
+    showToast('🚗 พบทะเบียน: ' + info.plate);
+    await checkPlate(info.plate, b64, info);
   } catch(e){
     console.error('triggerAutoScan error:', e);
     setCamStatus('❌ ' + e.message, false);
@@ -631,9 +627,9 @@ async function scanVehicleViaProxy(input){
     body: JSON.stringify({ requestId, images })
   }).catch(()=>{});
 
-  // ขั้นที่ 2: poll ผลลัพธ์ด้วย JSONP ทุก 1.5 วิ (สูงสุด ~25 วิ เพราะ 3 ภาพใช้เวลามากขึ้น)
+  // ขั้นที่ 2: poll ผลลัพธ์ด้วย JSONP ทุก 1 วิ (สูงสุด ~15 วิ — ภาพเดียว Gemini เร็วกว่า)
   let d = null;
-  for (let i = 0; i < 17; i++){
+  for (let i = 0; i < 15; i++){
     await new Promise(r => setTimeout(r, 1000));
     const res = await jsonp('getScanResult', { requestId });
     if (res.status !== 'pending'){ d = res; break; }
